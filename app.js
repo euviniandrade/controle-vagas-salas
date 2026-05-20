@@ -79,6 +79,7 @@ const resultPreview = $("#resultPreview");
 const roomDialog = $("#roomDialog");
 const roomForm = $("#roomForm");
 const brainCanvas = $("#brainScene");
+const stageDots = Array.from(document.querySelectorAll(".stage-dot"));
 
 const steps = [
   {
@@ -341,6 +342,7 @@ function renderMissionDeck() {
   if (progressText) progressText.textContent = `${progress}%`;
   if (progressBar) progressBar.style.width = `${progress}%`;
   if (resultPreview) resultPreview.textContent = totals.rooms ? `${totals.vacancies} vagas mapeadas` : "Vagas em tempo real";
+  stageDots.forEach((dot, index) => dot.classList.toggle("active", index <= Math.min(4, Math.floor(progress / 25))));
 }
 
 function missionLabel(step) {
