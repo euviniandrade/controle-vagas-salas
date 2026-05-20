@@ -71,6 +71,11 @@ const saveStatus = $("#saveStatus");
 const sendButton = $("#sendButton");
 const roomsList = $("#roomsList");
 const controlPanel = $(".control-panel");
+const missionTitle = $("#missionTitle");
+const missionHint = $("#missionHint");
+const progressText = $("#progressText");
+const progressBar = $("#progressBar");
+const resultPreview = $("#resultPreview");
 const roomDialog = $("#roomDialog");
 const roomForm = $("#roomForm");
 const brainCanvas = $("#brainScene");
@@ -321,9 +326,31 @@ function renderAll() {
   renderUnit();
   renderMetrics();
   renderRooms();
+  renderMissionDeck();
   $("#weekLabel").textContent = state.weekId || currentWeek;
   controlPanel.classList.toggle("is-empty", !state.rooms.length);
   lucide.createIcons();
+}
+
+function renderMissionDeck() {
+  const step = steps[Math.min(stepIndex, steps.length - 1)] || steps.at(-1);
+  const totals = getTotals();
+  const progress = Math.round((Math.min(stepIndex, steps.length - 1) / Math.max(steps.length - 1, 1)) * 100);
+  if (missionTitle) missionTitle.textContent = step?.title || missionLabel(step);
+  if (missionHint) missionHint.textContent = missionLabel(step);
+  if (progressText) progressText.textContent = `${progress}%`;
+  if (progressBar) progressBar.style.width = `${progress}%`;
+  if (resultPreview) resultPreview.textContent = totals.rooms ? `${totals.vacancies} vagas mapeadas` : "Vagas em tempo real";
+}
+
+function missionLabel(step) {
+  if (!step) return "Finalizar mapa de vagas";
+  if (step.key === "director") return "Escolha o diretor para iniciar o mapa.";
+  if (step.key === "unit") return "Confirme a unidade escolar.";
+  if (step.key === "hasHighSchool") return "Informe se a unidade oferece Ensino Médio.";
+  if (step.key === "weeklyDate") return "Defina a semana de referência.";
+  if (step.type === "segment") return `Mapear ${step.segment.name}.`;
+  return "Revisar salas, alunos e vagas.";
 }
 
 function renderUnit() {
