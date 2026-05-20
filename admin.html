@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Controle de Vagas APS</title>
+    <link rel="stylesheet" href="./admin.css?v=20260520-admin" />
+    <script src="./config.js?v=20260520-admin"></script>
+  </head>
+  <body>
+    <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
+    <main class="admin-shell">
+      <section id="loginView" class="login-stage">
+        <div class="login-copy">
+          <p class="eyebrow">Painel estratégico APS</p>
+          <h1>Central de leitura das vagas</h1>
+          <p>Entre para acompanhar unidades, salas, capacidade, alunos e saldo disponível sem abrir a planilha.</p>
+        </div>
+        <form id="loginForm" class="login-panel">
+          <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
+          <label>Email
+            <input id="adminEmail" type="email" autocomplete="username" required placeholder="seuemail@gmail.com" />
+          </label>
+          <label>Senha
+            <input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Senha administrativa" />
+          </label>
+          <button type="submit">Entrar no painel</button>
+          <p id="loginStatus" class="status-line">Acesso separado da tela dos diretores.</p>
+        </form>
+      </section>
+
+      <section id="dashboardView" class="dashboard" hidden>
+        <header class="admin-top">
+          <div>
+            <p class="eyebrow">Mapa vivo de campanha</p>
+            <h1>Resultados consolidados</h1>
+          </div>
+          <div class="admin-actions">
+            <a href="./index.html">Abrir assistente</a>
+            <button id="refreshButton" type="button">Atualizar dados</button>
+          </div>
+        </header>
+
+        <section class="signal-grid" aria-label="Resumo geral">
+          <article><span>Unidades</span><strong id="totalUnits">0</strong></article>
+          <article><span>Salas</span><strong id="totalRooms">0</strong></article>
+          <article><span>Capacidade</span><strong id="totalCapacity">0</strong></article>
+          <article><span>Alunos</span><strong id="totalStudents">0</strong></article>
+          <article class="hot"><span>Vagas</span><strong id="totalVacancies">0</strong></article>
+        </section>
+
+        <section class="workbench">
+          <article class="panel wide">
+            <div class="panel-head">
+              <div>
+                <span>Visão por unidade</span>
+                <h2>Onde ainda existe espaço para matrícula</h2>
+              </div>
+              <input id="unitSearch" type="search" placeholder="Buscar unidade ou diretor" />
+            </div>
+            <div id="unitTable" class="data-table"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <span>Acessos</span>
+                <h2>Usuários em implantação</h2>
+              </div>
+            </div>
+            <form id="accessForm" class="access-form">
+              <input id="accessName" required placeholder="Nome" />
+              <input id="accessEmail" type="email" required placeholder="Email" />
+              <input id="accessUnit" required placeholder="Unidade" />
+              <button type="submit">Criar pedido</button>
+            </form>
+            <div id="usersList" class="users-list"></div>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-head">
+              <div>
+                <span>Salas detalhadas</span>
+                <h2>Turmas, turnos e vagas por sala</h2>
+              </div>
+            </div>
+            <div id="roomsTable" class="data-table compact"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./admin.js?v=20260520-admin"></script>
+  </body>
+</html>
