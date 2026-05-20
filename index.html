@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle de Vagas por Sala - APS</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./config.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="./index.html" aria-label="Controle de vagas APS">
+          <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
+          <span>
+            <strong>Controle de Vagas</strong>
+            <small>Campanha de matrículas</small>
+          </span>
+        </a>
+        <nav class="top-actions" aria-label="Ações do sistema">
+          <button id="syncCloudButton" class="icon-btn ghost" type="button" title="Sincronizar com banco online" aria-label="Sincronizar com banco online"><i data-lucide="cloud-upload"></i></button>
+          <button id="newWeekButton" class="icon-btn ghost" type="button" title="Registrar nova semana" aria-label="Registrar nova semana"><i data-lucide="calendar-plus"></i></button>
+          <button id="exportCsvButton" class="icon-btn ghost" type="button" title="Exportar CSV" aria-label="Exportar CSV"><i data-lucide="file-spreadsheet"></i></button>
+          <button id="exportJsonButton" class="icon-btn ghost" type="button" title="Backup JSON" aria-label="Backup JSON"><i data-lucide="database-backup"></i></button>
+          <label class="icon-btn ghost" title="Importar JSON" aria-label="Importar JSON">
+            <i data-lucide="upload"></i>
+            <input id="importJsonInput" type="file" accept="application/json" />
+          </label>
+        </nav>
+      </header>
+
+      <main class="layout">
+        <section class="conversation" aria-label="Formulário conversacional">
+          <div class="chat-head">
+            <canvas id="brainScene" class="brain-scene" aria-hidden="true"></canvas>
+            <div>
+              <p class="eyebrow">Assistente guiado</p>
+              <h1>Mapa vivo de salas e vagas</h1>
+            </div>
+            <span id="saveStatus" class="save-status">Pronto</span>
+          </div>
+
+          <div id="chatLog" class="chat-log" aria-live="polite"></div>
+
+          <form id="answerForm" class="answer-bar">
+            <div id="answerMount" class="answer-mount"></div>
+            <button id="sendButton" class="send-btn" type="submit" aria-label="Responder"><i data-lucide="send"></i></button>
+          </form>
+        </section>
+
+        <aside class="control-panel is-empty" aria-label="Salas cadastradas">
+          <section class="unit-card">
+            <div class="unit-main">
+              <span id="unitBadge" class="badge">Unidade não iniciada</span>
+              <h2 id="unitTitle">Comece pela unidade</h2>
+              <p id="unitSubtitle">O assistente vai perguntar por diretor, segmentos, turnos e salas.</p>
+            </div>
+            <div class="health-ring" style="--filled: 0%">
+              <span id="vacancyTotal">0</span>
+              <small>vagas</small>
+            </div>
+          </section>
+
+          <section class="metrics" aria-label="Indicadores">
+            <div>
+              <span>Salas</span>
+              <strong id="roomsTotal">0</strong>
+            </div>
+            <div>
+              <span>Capacidade</span>
+              <strong id="capacityTotal">0</strong>
+            </div>
+            <div>
+              <span>Alunos</span>
+              <strong id="studentsTotal">0</strong>
+            </div>
+          </section>
+
+          <section class="segment-tabs" aria-label="Segmentos">
+            <button class="segment-tab active" type="button" data-segment-filter="all">Todos</button>
+            <button class="segment-tab" type="button" data-segment-filter="Educação Infantil">Infantil</button>
+            <button class="segment-tab" type="button" data-segment-filter="Contraturno">Contraturno</button>
+            <button class="segment-tab" type="button" data-segment-filter="Fundamental 1">Fund. 1</button>
+            <button class="segment-tab" type="button" data-segment-filter="Fundamental 2">Fund. 2</button>
+            <button class="segment-tab" type="button" data-segment-filter="Ensino Médio">Médio</button>
+          </section>
+
+          <section class="room-tools">
+            <button id="addRoomButton" class="primary-action" type="button"><i data-lucide="plus"></i><span>Adicionar sala</span></button>
+            <button id="clearRoomsButton" class="soft-action" type="button"><i data-lucide="eraser"></i><span>Limpar salas</span></button>
+          </section>
+
+          <section class="rooms-wrap">
+            <div class="rooms-head">
+              <div>
+                <span id="weekLabel" class="week-pill">Semana atual</span>
+                <h3>Revise as salas cadastradas</h3>
+              </div>
+              <p id="roomsHint">Toque em uma sala para informar capacidade e alunos atuais.</p>
+            </div>
+            <div id="roomsList" class="rooms-list"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog id="roomDialog" class="room-dialog">
+      <form method="dialog" id="roomForm">
+        <div class="dialog-head">
+          <div>
+            <p class="eyebrow">Sala</p>
+            <h2 id="roomDialogTitle">Adicionar sala</h2>
+          </div>
+          <button class="icon-btn ghost" value="cancel" type="submit" aria-label="Fechar"><i data-lucide="x"></i></button>
+        </div>
+        <div class="room-grid">
+          <label>Segmento
+            <select id="roomSegment" required></select>
+          </label>
+          <label>Série/turma
+            <input id="roomGrade" type="text" required placeholder="Ex.: 1º Ano" />
+          </label>
+          <label>Turno
+            <select id="roomShift" required></select>
+          </label>
+          <label>Letra
+            <input id="roomLetter" type="text" maxlength="3" placeholder="A" />
+          </label>
+          <label>Capacidade máxima
+            <input id="roomCapacity" type="number" min="0" step="1" required />
+          </label>
+          <label>Alunos atuais
+            <input id="roomStudents" type="number" min="0" step="1" required />
+          </label>
+        </div>
+        <menu class="dialog-actions">
+          <button id="deleteRoomButton" class="danger-action" type="button"><i data-lucide="trash-2"></i><span>Excluir</span></button>
+          <button class="soft-action" value="cancel" type="submit">Cancelar</button>
+          <button id="saveRoomButton" class="primary-action" value="default" type="button"><i data-lucide="check"></i><span>Salvar sala</span></button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
