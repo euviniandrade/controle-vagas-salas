@@ -8,7 +8,10 @@ const HEADERS = {
   Unidades: ["Atualizado em", "Unidade", "Diretor", "Semana", "Tem Ensino Medio", "Total de salas", "Capacidade total", "Alunos atuais", "Vagas disponiveis", "Payload JSON"],
   Salas: ["Atualizado em", "Unidade", "Diretor", "Semana", "Segmento", "Serie", "Turno", "Sala", "Capacidade", "Alunos", "Vagas", "ID da sala", "Tem Ensino Medio", "Payload JSON"],
   HistoricoSemanal: ["Registrado em", "Semana", "Unidade", "Diretor", "Total de salas", "Capacidade total", "Alunos atuais", "Vagas disponiveis", "Historico ID", "Payload JSON"],
+  SalasPrevistas: ["Atualizado em", "Unidade", "Serie", "Segmento", "Turno", "Quantidade prevista", "Tem Ensino Medio", "Observacao", "Origem", "Payload JSON"],
   Movimentacoes: ["Registrado em", "Tipo", "Unidade", "Diretor", "Semana", "ID da sala", "Segmento", "Serie", "Turno", "Sala", "Quantidade", "Alunos antes", "Alunos depois", "Motivo", "Origem", "Payload JSON"],
+  Evasao: ["Registrado em", "Unidade", "Diretor", "Semana", "Serie", "Turno", "Sala", "Quantidade", "Motivo", "Comparativo semana", "Comparativo mes", "Comparativo ano", "Payload JSON"],
+  PesquisasPais: ["Recebido em", "Unidade", "Responsavel", "Aluno", "Turma", "Pergunta", "Resposta", "Canal", "Payload JSON"],
   Relatorios: ["Criado em", "Unidade", "Diretor", "Semana", "Relatorio ID", "Tipo", "Total de salas", "Capacidade total", "Alunos atuais", "Vagas disponiveis", "Ocupacao %", "Entradas", "Saidas", "Doc URL", "PDF URL", "Resumo JSON"],
   Eventos: ["Recebido em", "Tipo", "Unidade", "Diretor", "Semana", "Total de salas", "Vagas", "Payload JSON"],
   Usuarios: ["Criado em", "Nome", "Email", "Unidade", "Status", "Perfil", "Atualizado em"],
@@ -110,6 +113,7 @@ function adminDashboard(params) {
       users: getUsers(ss.getSheetByName("Usuarios")),
       reports: getReports(ss.getSheetByName("Relatorios")),
       movements: getMovements(ss.getSheetByName("Movimentacoes")),
+      evasion: getEvasion(ss.getSheetByName("Evasao")),
     },
   };
 }
@@ -227,6 +231,8 @@ function syncPayload(ss, payload) {
     safeJson(room),
   ]));
 
+  replaceRowsForUnit(ss.getSheetByName("SalasPrevistas"), unit, 2, blueprintRows(payload, receivedAt));
+
   replaceRowsForUnit(ss.getSheetByName("HistoricoSemanal"), unit, 3, (payload.history || []).map((item) => [
     item.createdAt ? new Date(item.createdAt) : receivedAt,
     item.weekId || "",
@@ -259,6 +265,24 @@ function syncPayload(ss, payload) {
     safeJson(movement),
   ]));
 
+  replaceRowsForUnit(ss.getSheetByName("Evasao"), unit, 2, (payload.movements || [])
+    .filter((movement) => movement.type === "Saída")
+    .map((movement) => [
+      movement.createdAt ? new Date(movement.createdAt) : receivedAt,
+      unit,
+      director,
+      movement.weekId || payload.weekId || "",
+      movement.grade || "",
+      movement.shift || "",
+      movement.letter || "",
+      Number(movement.amount || 0),
+      movement.reason || "Nao informado",
+      movement.weekId || payload.weekId || "",
+      Utilities.formatDate(movement.createdAt ? new Date(movement.createdAt) : receivedAt, Session.getScriptTimeZone(), "yyyy-MM"),
+      Utilities.formatDate(movement.createdAt ? new Date(movement.createdAt) : receivedAt, Session.getScriptTimeZone(), "yyyy"),
+      safeJson(movement),
+    ]));
+
   replaceReportRowsForUnit(ss, payload, receivedAt);
 
   appendRows(ss.getSheetByName("Eventos"), [[
@@ -271,6 +295,30 @@ function syncPayload(ss, payload) {
     totals.vacancies || 0,
     snapshotJson,
   ]]);
+}
+
+function blueprintRows(payload, receivedAt) {
+  const blueprint = payload.blueprint || {};
+  const unit = payload.unit || blueprint.unit || "";
+  if (!blueprint.grades || !blueprint.grades.length) return [];
+  const rows = [];
+  blueprint.grades.forEach((item) => {
+    Object.keys(item.shifts || {}).forEach((shift) => {
+      rows.push([
+        receivedAt,
+        unit,
+        item.grade || "",
+        item.segment || "",
+        shift || "",
+        Number(item.shifts[shift] || 0),
+        blueprint.hasHighSchool ? "Sim" : "Nao",
+        item.note || "",
+        "Planilha de salas por unidade",
+        safeJson(item),
+      ]);
+    });
+  });
+  return rows;
 }
 
 function replaceReportRowsForUnit(ss, payload, receivedAt) {
@@ -447,6 +495,23 @@ function getMovements(sheet) {
     newStudents: row[12] || 0,
     reason: row[13] || "",
     source: row[14] || "",
+  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function getEvasion(sheet) {
+  return readRows(sheet).map((row) => ({
+    createdAt: valueToString(row[0]),
+    unit: row[1] || "",
+    director: row[2] || "",
+    week: row[3] || "",
+    grade: row[4] || "",
+    shift: row[5] || "",
+    letter: row[6] || "",
+    amount: row[7] || 0,
+    reason: row[8] || "",
+    weekKey: row[9] || "",
+    monthKey: row[10] || "",
+    yearKey: row[11] || "",
   })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 

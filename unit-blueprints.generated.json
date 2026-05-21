@@ -1,0 +1,1606 @@
+{
+  "CATS": {
+    "unit": "CATS",
+    "totalRooms": 81,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 4,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 4,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      }
+    ],
+    "notes": []
+  },
+  "CACLI": {
+    "unit": "CACLI",
+    "totalRooms": 59,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": []
+  },
+  "CACLI II": {
+    "unit": "CACLI II",
+    "totalRooms": 35,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "Multisseriada"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: Multisseriada"
+    ]
+  },
+  "CAIS": {
+    "unit": "CAIS",
+    "totalRooms": 37,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      }
+    ],
+    "notes": []
+  },
+  "CAEA": {
+    "unit": "CAEA",
+    "totalRooms": 42,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2
+        }
+      }
+    ],
+    "notes": []
+  },
+  "CAP": {
+    "unit": "CAP",
+    "totalRooms": 82,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 4
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 3
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 4,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 4,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": []
+  },
+  "CAR": {
+    "unit": "CAR",
+    "totalRooms": 28,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 1
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 1
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+    ]
+  },
+  "CAEGW": {
+    "unit": "CAEGW",
+    "totalRooms": 36,
+    "hasHighSchool": true,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "MULTISSERIADA"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 4,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano EM",
+        "segment": "Ensino Medio",
+        "shifts": {
+          "Manha": 3,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: MULTISSERIADA"
+    ]
+  },
+  "EAP": {
+    "unit": "EAP",
+    "totalRooms": 14,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1
+        }
+      }
+    ],
+    "notes": []
+  },
+  "EATW": {
+    "unit": "EATW",
+    "totalRooms": 22,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "MULTISSERIADA"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: MULTISSERIADA"
+    ]
+  },
+  "EAJL": {
+    "unit": "EAJL",
+    "totalRooms": 28,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "MULTISSERIADA"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: MULTISSERIADA"
+    ]
+  },
+  "EAA": {
+    "unit": "EAA",
+    "totalRooms": 33,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "Turma da manh\u00e3 multisseriada"
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        },
+        "note": "turma da manh\u00e3 multisseriada"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": [
+      "Maternal: Turma da manh\u00e3 multisseriada",
+      "Pre I: turma da manh\u00e3 multisseriada"
+    ]
+  },
+  "EACF": {
+    "unit": "EACF",
+    "totalRooms": 34,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Maternal",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": []
+  },
+  "EAVB": {
+    "unit": "EAVB",
+    "totalRooms": 33,
+    "hasHighSchool": false,
+    "grades": [
+      {
+        "grade": "Pre I",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        },
+        "note": "multisseriada"
+      },
+      {
+        "grade": "Pre II",
+        "segment": "Educacao Infantil",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "1o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "2o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "3o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "4o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "5o Ano",
+        "segment": "Fundamental 1",
+        "shifts": {
+          "Manha": 1,
+          "Tarde": 2
+        }
+      },
+      {
+        "grade": "6o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "7o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "8o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      },
+      {
+        "grade": "9o Ano",
+        "segment": "Fundamental 2",
+        "shifts": {
+          "Manha": 2,
+          "Tarde": 1
+        }
+      }
+    ],
+    "notes": [
+      "Pre I: multisseriada"
+    ]
+  }
+}

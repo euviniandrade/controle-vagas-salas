@@ -3,6 +3,7 @@ const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "ap
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
+const unitBlueprints = window.UNIT_BLUEPRINTS || {};
 
 const directorUnits = [
   ["Douglas", "CAR"], ["Washington", "CAP"], ["Anderson", "CAEGW"], ["Albert", "CATS"],
@@ -81,7 +82,7 @@ function ensureDefaults() {
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
+  const validQuestions = new Set(["director", "unit", "yesno", "blueprintConfirm", "roomCount", "roomStudents", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -268,6 +269,11 @@ function renderAnswer() {
     answerMount.innerHTML = `<select required>${exitReasons.map((reason) => `<option>${escapeHtml(reason)}</option>`).join("")}</select>`;
     return;
   }
+  if (q.type === "blueprintConfirm") {
+    answerMount.innerHTML = choiceButtons(["Confirmar estrutura", "Ajustar manualmente"]);
+    bindSingleChoice();
+    return;
+  }
   if (q.type === "director") {
     answerMount.innerHTML = `
       <input type="text" required list="directorSuggestions" autocomplete="name" placeholder="Seu nome" />
@@ -343,7 +349,7 @@ function collectValue(q) {
   if (["director", "unit", "roomCount", "roomStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
     return answerMount.querySelector("select,input")?.value ?? "";
   }
-  if (q.type === "yesno" || q.type === "dailyType") return answerMount.querySelector("input")?.value || "";
+  if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm") return answerMount.querySelector("input")?.value || "";
   return "";
 }
 
@@ -356,6 +362,8 @@ function restartGuide() {
   state.submittedAt = "";
   delete state.updateFlow;
   delete state.pendingSegment;
+  delete state.prefillFlow;
+  delete state.prefillContraturnoOnly;
   chatLog.innerHTML = "";
   chatLog.dataset.started = "";
   appendAssistant("Vamos recomeçar com uma coleta limpa, uma pergunta por vez. Qual é o seu nome?");
@@ -589,6 +597,7 @@ function importJson(event) {
 }
 
 function appendAssistant(html) {
+  compactChatForNextPrompt(html);
   const message = appendMessage("assistant", html);
   maybePolishAssistantMessage(message, html);
 }
@@ -600,6 +609,24 @@ function appendMessage(role, html) {
   chatLog.appendChild(message);
   chatLog.scrollTop = chatLog.scrollHeight;
   return message;
+}
+
+function compactChatForNextPrompt(html) {
+  const text = String(html || "");
+  const keepHistory = text.includes("<") || state.currentQuestion?.type === "review";
+  if (keepHistory) return;
+  const messages = Array.from(chatLog.querySelectorAll(".message"));
+  const lastUser = [...messages].reverse().find((message) => message.classList.contains("user") && !message.classList.contains("is-archived"));
+  let hidden = 0;
+  messages.forEach((message) => {
+    if (message === lastUser) return;
+    if (!message.classList.contains("is-archived")) hidden += 1;
+    message.classList.add("is-archived");
+  });
+  const archivedTotal = Number(chatLog.dataset.archivedCount || 0) + hidden;
+  chatLog.dataset.archivedCount = String(archivedTotal);
+  chatLog.classList.toggle("has-archived", archivedTotal > 0);
+  chatLog.dataset.archiveLabel = archivedTotal > 1 ? `${archivedTotal} mensagens anteriores ocultas` : "1 mensagem anterior oculta";
 }
 
 function maybePolishAssistantMessage(message, html) {
@@ -689,7 +716,7 @@ async function syncToCloud(reason = "manual") {
 
 function buildCloudPayload(reason) {
   const totals = getTotals();
-  return { reason, syncedAt: new Date().toISOString(), submittedAt: state.submittedAt || "", unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
+  return { reason, syncedAt: new Date().toISOString(), submittedAt: state.submittedAt || "", unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", blueprint: unitBlueprints[state.unit] || null, totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
 }
 
 function loadState() {
@@ -949,9 +976,10 @@ function currentQuestionPrompt() {
   if (q.type === "unit") return `${firstName()}, confirme a unidade para continuarmos.`;
   if (q.type === "yesno" && q.key === "hasContraturno") return `${firstName()}, a unidade oferece contraturno?`;
   if (q.type === "yesno" && q.key === "hasHighSchool") return "A unidade possui Ensino Médio?";
+  if (q.type === "blueprintConfirm") return blueprintSummaryText(getCurrentBlueprint());
   if (q.type === "roomCount" && state.pendingSegment) return `${firstName()}, ${currentRoomCountText()}`;
-  if (q.type === "roomStudents" && state.pendingSegment) return `Agora ${roomLabel(currentPendingRoom())}: quantos alunos essa turma tem hoje?`;
-  if (q.type === "roomCapacity" && state.pendingSegment) return `E qual é a capacidade máxima da sala ${roomLabel(currentPendingRoom())}?`;
+  if (q.type === "roomStudents" && (state.pendingSegment || state.prefillFlow)) return `Agora ${roomLabel(currentPendingRoom())}: quantos alunos essa turma tem hoje?`;
+  if (q.type === "roomCapacity" && (state.pendingSegment || state.prefillFlow)) return `E qual é a capacidade máxima da sala ${roomLabel(currentPendingRoom())}?`;
   if (q.type === "review") return "Confira o resumo antes do envio final. Se estiver correto, confirme para enviar ao painel administrativo.";
   if (q.type === "done") return "Mapa confirmado. Você já pode atualizar entradas e saídas diariamente ou gerar novos relatórios.";
   if (q.type === "dailyRoom") return `${firstName()}, qual sala teve entrada, saída ou ajuste de alunos hoje?`;
@@ -1022,8 +1050,26 @@ function handleAnswer(q, value) {
   }
   if (q.type === "yesno" && q.key === "hasContraturno") {
     state.answers.hasContraturno = value === "Sim";
+    const blueprint = getCurrentBlueprint();
+    if (blueprint) {
+      state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
+      appendAssistant(blueprintSummaryText(blueprint));
+      state.currentQuestion = { type: "blueprintConfirm" };
+      return;
+    }
     appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
     state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
+    return;
+  }
+  if (q.type === "blueprintConfirm") {
+    if (value === "Confirmar estrutura") {
+      startBlueprintCollection();
+      return;
+    }
+    appendAssistant("Sem problema. Vamos ajustar manualmente a estrutura da unidade antes de preencher alunos e capacidade.");
+    state.rooms = [];
+    state.answers.hasHighSchool = Boolean(getCurrentBlueprint()?.hasHighSchool);
+    startNextSegment(0);
     return;
   }
   if (q.type === "yesno" && q.key === "hasHighSchool") {
@@ -1067,10 +1113,82 @@ function handleAnswer(q, value) {
   if (q.type === "roomCapacity") {
     currentPendingRoom().capacity = Number(value || 0);
     currentPendingRoom().updatedAt = new Date().toISOString();
+    if (state.prefillFlow) {
+      state.rooms.push(currentPendingRoom());
+      state.prefillFlow.roomIndex += 1;
+      askNextPrefilledRoom();
+      return;
+    }
     state.pendingSegment.roomIndex += 1;
     if (state.pendingSegment.roomIndex < currentPendingPair().rooms.length) askRoomStudents();
     else advancePair();
   }
+}
+
+function getCurrentBlueprint() {
+  return unitBlueprints[state.unit] || null;
+}
+
+function blueprintSummaryText(blueprint) {
+  const highSchool = blueprint.hasHighSchool ? "com Ensino Médio" : "sem Ensino Médio";
+  const notes = blueprint.notes?.length ? ` Observações importadas: ${blueprint.notes.slice(0, 3).join("; ")}.` : "";
+  return `${firstName()}, encontrei a estrutura prevista da unidade ${blueprint.unit}: ${blueprint.totalRooms} turma(s), ${highSchool}. Posso usar essa base e pedir apenas alunos atuais e capacidade de cada sala?${notes}`;
+}
+
+function startBlueprintCollection() {
+  const blueprint = getCurrentBlueprint();
+  if (!blueprint) {
+    startNextSegment(0);
+    return;
+  }
+  state.rooms = [];
+  state.prefillFlow = {
+    source: blueprint.unit,
+    rooms: buildRoomsFromBlueprint(blueprint),
+    roomIndex: 0,
+  };
+  appendAssistant(`Perfeito. Vou usar as ${state.prefillFlow.rooms.length} turmas previstas da unidade ${blueprint.unit} e confirmar sala por sala.`);
+  askNextPrefilledRoom();
+}
+
+function buildRoomsFromBlueprint(blueprint) {
+  const rooms = [];
+  (blueprint.grades || []).forEach((gradePlan) => {
+    Object.entries(gradePlan.shifts || {}).forEach(([rawShift, count]) => {
+      const shift = displayShift(rawShift);
+      Array.from({ length: Number(count || 0) }).forEach((_, index) => {
+        rooms.push({
+          id: crypto.randomUUID(),
+          segment: displaySegment(gradePlan.segment),
+          grade: displayGrade(gradePlan.grade),
+          shift,
+          letter: String.fromCharCode(65 + index),
+          capacity: defaultCapacityForSegment(displaySegment(gradePlan.segment)),
+          students: 0,
+          note: gradePlan.note || "",
+          updatedAt: new Date().toISOString(),
+        });
+      });
+    });
+  });
+  return rooms;
+}
+
+function askNextPrefilledRoom() {
+  const flow = state.prefillFlow;
+  if (!flow || flow.roomIndex >= flow.rooms.length) {
+    delete state.prefillFlow;
+    if (state.answers.hasContraturno) {
+      appendAssistant("Estrutura regular concluída. Agora vamos mapear o contraturno informado pela unidade.");
+      const contraturnoIndex = segmentPlan.findIndex((segment) => segment.key === "contraturno");
+      state.prefillContraturnoOnly = true;
+      startNextSegment(contraturnoIndex);
+      return;
+    }
+    finishGuide();
+    return;
+  }
+  askRoomStudents();
 }
 
 function startNextSegment(index) {
@@ -1125,6 +1243,11 @@ function advancePair() {
     appendAssistant(`${segment.name} concluído. Já estou somando as vagas e avançando para o próximo bloco.`);
     const segmentIndex = pending.segmentIndex;
     delete state.pendingSegment;
+    if (state.prefillContraturnoOnly && segment.key === "contraturno") {
+      delete state.prefillContraturnoOnly;
+      finishGuide();
+      return;
+    }
     startNextSegment(segmentIndex + 1);
   }
 }
@@ -1134,6 +1257,7 @@ function currentPendingPair() {
 }
 
 function currentPendingRoom() {
+  if (state.prefillFlow) return state.prefillFlow.rooms[state.prefillFlow.roomIndex];
   return currentPendingPair().rooms[state.pendingSegment.roomIndex];
 }
 
@@ -1149,6 +1273,10 @@ function finishGuide() {
 function calculateProgress() {
   if (state.currentQuestion.type === "review") return 98;
   if (state.currentQuestion.type === "done") return 100;
+  if (state.prefillFlow) {
+    const total = Math.max(1, state.prefillFlow.rooms.length);
+    return Math.min(97, Math.round(28 + (state.prefillFlow.roomIndex / total) * 62));
+  }
   if (state.pendingSegment) {
     const availableSegments = segmentPlan.filter((segment) => {
       if (segment.gatedBy === "hasContraturno" && !state.answers.hasContraturno) return false;
@@ -1163,7 +1291,7 @@ function calculateProgress() {
     return Math.min(99, Math.max(28, Math.round(28 + (completed / Math.max(1, totalPairs)) * 68)));
   }
   if (String(state.currentQuestion.type || "").startsWith("daily")) return 100;
-  const base = { director: 0, unit: 9, yesno: state.currentQuestion.key === "hasHighSchool" ? 22 : 14, roomCount: 34, roomStudents: 48, roomCapacity: 58 };
+  const base = { director: 0, unit: 9, yesno: state.currentQuestion.key === "hasHighSchool" ? 22 : 14, blueprintConfirm: 25, roomCount: 34, roomStudents: 48, roomCapacity: 58 };
   return Math.min(99, base[state.currentQuestion.type] || 10);
 }
 
@@ -1173,6 +1301,7 @@ function missionLabel() {
   if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
+  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base importada da planilha por unidade." };
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
   if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
@@ -1194,6 +1323,29 @@ function segmentIntro(segment) {
 
 function firstName() {
   return state.director ? state.director.split(" ")[0] : "Diretor";
+}
+
+function displayShift(value) {
+  return String(value || "").replace("Manha", "Manhã");
+}
+
+function displayGrade(value) {
+  return String(value || "")
+    .replace("Pre I", "Pré I")
+    .replace("Pre II", "Pré II")
+    .replace(/(\d+)o Ano EM/g, "$1º Ano EM")
+    .replace(/(\d+)o Ano/g, "$1º Ano");
+}
+
+function displaySegment(value) {
+  return String(value || "")
+    .replace("Educacao Infantil", "Educação Infantil")
+    .replace("Ensino Medio", "Ensino Médio");
+}
+
+function defaultCapacityForSegment(segment) {
+  const plan = segmentPlan.find((item) => item.name === segment);
+  return plan?.capacity || 30;
 }
 
 function normalizeName(value) {

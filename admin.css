@@ -163,7 +163,7 @@ a { color: inherit; text-decoration: none; }
 
 .signal-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 12px;
 }
 .signal-grid article { min-height: 122px; padding: 18px; position: relative; overflow: hidden; }

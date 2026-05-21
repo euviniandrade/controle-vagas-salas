@@ -2,7 +2,7 @@ const apiUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const tokenKey = "aps-admin-token";
 
 const $ = (selector) => document.querySelector(selector);
-let dashboardData = { units: [], rooms: [], users: [], reports: [], movements: [] };
+let dashboardData = { units: [], rooms: [], users: [], reports: [], movements: [], evasion: [] };
 let refreshTimer = null;
 
 initAdmin();
@@ -100,6 +100,7 @@ function renderDashboard() {
   const users = dashboardData.users || [];
   const reports = dashboardData.reports || [];
   const movements = dashboardData.movements || [];
+  const evasion = dashboardData.evasion || movements.filter((movement) => movement.type === "Saída");
   const totals = units.reduce((acc, unit) => {
     acc.units += 1;
     acc.rooms += Number(unit.totalRooms || 0);
@@ -125,6 +126,7 @@ function renderDashboard() {
   $("#totalVacancies").textContent = totals.vacancies;
   $("#totalEntries").textContent = movementTotals.entries;
   $("#totalExits").textContent = movementTotals.exits;
+  $("#evasionRate").textContent = totals.students ? `${Math.round((movementTotals.exits / totals.students) * 1000) / 10}%` : "0%";
 
   const query = $("#unitSearch").value.trim().toLowerCase();
   const filteredUnits = units.filter((unit) => `${unit.unit} ${unit.director}`.toLowerCase().includes(query));
@@ -160,6 +162,11 @@ function renderDashboard() {
     ? Object.entries(movementTotals.reasons).sort((a, b) => b[1] - a[1]).map(([reason, total]) => `<div class="reason-item"><strong>${escapeHtml(reason)}</strong><span>${escapeHtml(total)} saída(s)</span></div>`).join("")
     : `<div class="empty-state">Sem saídas registradas até agora.</div>`;
 
+  const periodTotals = summarizeEvasionPeriods(evasion);
+  $("#evasionPeriodList").innerHTML = periodTotals.length
+    ? periodTotals.map((item) => `<div class="reason-item"><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.total)} saída(s)</span></div>`).join("")
+    : `<div class="empty-state">Os comparativos semanais, mensais e anuais começam a partir dos próximos registros.</div>`;
+
   $("#reportsTable").innerHTML = table([
     ["Unidade", "Diretor", "Criado em", "Vagas", "Ocupação", "Drive"],
     ...reports.slice(0, 120).map((report) => [
@@ -171,6 +178,24 @@ function renderDashboard() {
       report.docUrl ? `<a href="${escapeAttr(report.docUrl)}" target="_blank" rel="noopener">Abrir</a>` : `<span>Aguardando Drive</span>`,
     ]),
   ]);
+}
+
+function summarizeEvasionPeriods(evasion) {
+  const buckets = {};
+  evasion.forEach((item) => {
+    const date = new Date(item.createdAt || Date.now());
+    const week = item.weekKey || item.week || "Semana atual";
+    const month = item.monthKey || `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const year = item.yearKey || String(date.getFullYear());
+    const amount = Number(item.amount || 0);
+    buckets[`Semana ${week}`] = (buckets[`Semana ${week}`] || 0) + amount;
+    buckets[`Mês ${month}`] = (buckets[`Mês ${month}`] || 0) + amount;
+    buckets[`Ano ${year}`] = (buckets[`Ano ${year}`] || 0) + amount;
+  });
+  return Object.entries(buckets)
+    .map(([label, total]) => ({ label, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 9);
 }
 
 function table(rows) {

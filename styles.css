@@ -469,9 +469,21 @@ h1 {
     radial-gradient(circle at 10% 18%, rgba(255,212,71,.08), transparent 26%),
     linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.075));
 }
+.chat-log.has-archived::before {
+  content: attr(data-archive-label);
+  justify-self: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: var(--muted);
+  background: rgba(255,255,255,.055);
+  font-size: .76rem;
+  font-weight: 850;
+}
 .message { max-width: min(760px, 90%); display: grid; gap: 8px; animation: rise .28s ease both; }
 .message.assistant { justify-self: start; }
 .message.user { justify-self: end; }
+.message.is-archived { display: none; }
 .bubble {
   border-radius: 8px;
   padding: 15px 17px;
