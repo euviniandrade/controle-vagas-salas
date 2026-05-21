@@ -1,4 +1,4 @@
-const storageKey = "aps-controle-vagas-v2";
+const storageKey = "aps-controle-vagas-v3";
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -11,11 +11,11 @@ const directorUnits = [
 ].map(([director, unit]) => ({ director, unit }));
 
 const segmentPlan = [
-  { key: "infantil", name: "Educação Infantil", grades: ["Maternal", "Pré I", "Pré II"], shifts: ["Manhã", "Tarde"], capacity: 22 },
+  { key: "infantil", name: "Educação Infantil", grades: ["Maternal", "Pré I", "Pré II"], shifts: ["Manhã", "Tarde"], capacity: 22, required: true },
   { key: "contraturno", name: "Contraturno", grades: ["Contraturno Infantil", "Contraturno Fund. 1", "Contraturno Fund. 2"], shifts: ["Manhã", "Tarde", "Integral"], capacity: 25, gatedBy: "hasContraturno" },
   { key: "fund1", name: "Fundamental 1", grades: ["1º Ano", "2º Ano", "3º Ano", "4º Ano", "5º Ano"], shifts: ["Manhã", "Tarde"], capacity: 32 },
   { key: "fund2", name: "Fundamental 2", grades: ["6º Ano", "7º Ano", "8º Ano", "9º Ano"], shifts: ["Manhã", "Tarde"], capacity: 35 },
-  { key: "medio", name: "Ensino Médio", grades: ["1º Ano EM", "2º Ano EM", "3º Ano EM"], shifts: ["Manhã", "Tarde", "Noite"], capacity: 38, gatedBy: "hasHighSchool" },
+  { key: "medio", name: "Ensino Médio", grades: ["1º Ano EM", "2º Ano EM", "3º Ano EM"], shifts: ["Manhã", "Tarde"], capacity: 38, gatedBy: "hasHighSchool" },
 ];
 
 const $ = (selector) => document.querySelector(selector);
@@ -66,6 +66,11 @@ function ensureDefaults() {
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
+  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "done"]);
+  if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
+    state.currentQuestion = { type: "director" };
+    delete state.pendingSegment;
+  }
 }
 
 function bindEvents() {
@@ -724,6 +729,202 @@ function csvEscape(value) { return `"${String(value ?? "").replaceAll('"', '""')
 function slug(value) { return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)/g, "").toLowerCase(); }
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]); }
 function escapeAttr(value) { return escapeHtml(value).replaceAll("\n", " "); }
+
+function handleAnswer(q, value) {
+  if (q.type === "director") {
+    state.director = value;
+    const match = directorUnits.find((item) => item.director === value);
+    if (match) state.unit = match.unit;
+    appendAssistant(`${value}, combinado. Eu vou conduzir tudo turma por turma e deixar o saldo de vagas pronto no final. Confirme a unidade.`);
+    state.currentQuestion = { type: "unit" };
+    return;
+  }
+  if (q.type === "unit") {
+    state.unit = value;
+    state.weeklyDate = new Date().toISOString().slice(0, 10);
+    state.weekId = currentWeek;
+    appendAssistant(`${firstName()}, antes das turmas: a unidade oferece contraturno?`);
+    state.currentQuestion = { type: "yesno", key: "hasContraturno" };
+    return;
+  }
+  if (q.type === "yesno" && q.key === "hasContraturno") {
+    state.answers.hasContraturno = value === "Sim";
+    appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
+    state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
+    return;
+  }
+  if (q.type === "yesno" && q.key === "hasHighSchool") {
+    state.answers.hasHighSchool = value === "Sim";
+    state.weeklyDate = new Date().toISOString().slice(0, 10);
+    state.weekId = currentWeek;
+    appendAssistant(`${firstName()}, vamos direto ao ponto. Começaremos pela Educação Infantil, sala por sala.`);
+    startNextSegment(0);
+    return;
+  }
+  if (q.type === "roomCount") {
+    const count = Math.max(0, Number(value || 0));
+    const pending = state.pendingSegment;
+    const pair = currentPendingPair();
+    pair.count = count;
+    pair.rooms = Array.from({ length: count }, (_, index) => ({
+      id: crypto.randomUUID(),
+      segment: segmentPlan[pending.segmentIndex].name,
+      grade: pair.grade,
+      shift: pair.shift,
+      letter: String.fromCharCode(65 + index),
+      capacity: segmentPlan[pending.segmentIndex].capacity,
+      students: 0,
+      updatedAt: new Date().toISOString(),
+    }));
+    pending.roomIndex = 0;
+    if (count <= 0) {
+      appendAssistant(`Perfeito, sem ${pair.grade} no turno da ${shiftText(pair.shift)}. Vou avançar.`);
+      advancePair();
+    } else {
+      appendAssistant(`${count} turma(s) registrada(s). Vou nomear como ${pair.grade} A${count > 1 ? ` até ${pair.grade} ${String.fromCharCode(64 + count)}` : ""}.`);
+      askRoomStudents();
+    }
+    return;
+  }
+  if (q.type === "roomStudents") {
+    currentPendingRoom().students = Number(value || 0);
+    askRoomCapacity();
+    return;
+  }
+  if (q.type === "roomCapacity") {
+    currentPendingRoom().capacity = Number(value || 0);
+    currentPendingRoom().updatedAt = new Date().toISOString();
+    state.pendingSegment.roomIndex += 1;
+    if (state.pendingSegment.roomIndex < currentPendingPair().rooms.length) askRoomStudents();
+    else advancePair();
+  }
+}
+
+function startNextSegment(index) {
+  const nextIndex = segmentPlan.findIndex((segment, segmentIndex) => {
+    if (segmentIndex < index) return false;
+    if (segment.gatedBy === "hasContraturno" && !state.answers.hasContraturno) return false;
+    if (segment.gatedBy === "hasHighSchool" && !state.answers.hasHighSchool) return false;
+    return true;
+  });
+  if (nextIndex === -1) {
+    finishGuide();
+    return;
+  }
+  const segment = segmentPlan[nextIndex];
+  state.pendingSegment = {
+    segmentIndex: nextIndex,
+    pairs: segment.grades.flatMap((grade) => segment.shifts.map((shift) => ({ grade, shift, rooms: [] }))),
+    pairIndex: 0,
+    roomIndex: 0,
+  };
+  appendAssistant(segmentIntro(segment));
+  askRoomCount();
+}
+
+function askRoomCount() {
+  const pair = currentPendingPair();
+  appendAssistant(`${firstName()}, quantas turmas de ${pair.grade} funcionam no turno da ${shiftText(pair.shift)}? Se não tiver, responda 0.`);
+  state.currentQuestion = { type: "roomCount" };
+}
+
+function askRoomStudents() {
+  const room = currentPendingRoom();
+  appendAssistant(`Agora ${roomLabel(room)}: quantos alunos essa turma tem hoje?`);
+  state.currentQuestion = { type: "roomStudents" };
+}
+
+function askRoomCapacity() {
+  const room = currentPendingRoom();
+  appendAssistant(`E qual é a capacidade máxima da sala ${roomLabel(room)}?`);
+  state.currentQuestion = { type: "roomCapacity" };
+}
+
+function advancePair() {
+  const pending = state.pendingSegment;
+  const pair = currentPendingPair();
+  state.rooms.push(...(pair.rooms || []));
+  pending.pairIndex += 1;
+  pending.roomIndex = 0;
+  if (pending.pairIndex < pending.pairs.length) {
+    askRoomCount();
+  } else {
+    const segment = segmentPlan[pending.segmentIndex];
+    appendAssistant(`${segment.name} concluído. Já estou somando as vagas e avançando para o próximo bloco.`);
+    const segmentIndex = pending.segmentIndex;
+    delete state.pendingSegment;
+    startNextSegment(segmentIndex + 1);
+  }
+}
+
+function currentPendingPair() {
+  return state.pendingSegment.pairs[state.pendingSegment.pairIndex];
+}
+
+function currentPendingRoom() {
+  return currentPendingPair().rooms[state.pendingSegment.roomIndex];
+}
+
+function finishGuide() {
+  const totals = getTotals();
+  const ending = state.answers.hasHighSchool ? "até o 3º ano do Ensino Médio" : "até o 9º ano";
+  appendAssistant(`${firstName()}, mapa concluído ${ending}. Temos ${totals.rooms} sala(s), ${totals.students} aluno(s) e ${totals.vacancies} vaga(s) disponíveis agora.`);
+  state.currentQuestion = { type: "done" };
+  syncToCloud("completed-guide");
+}
+
+function calculateProgress() {
+  if (state.currentQuestion.type === "done") return 100;
+  if (state.pendingSegment) {
+    const availableSegments = segmentPlan.filter((segment) => {
+      if (segment.gatedBy === "hasContraturno" && !state.answers.hasContraturno) return false;
+      if (segment.gatedBy === "hasHighSchool" && !state.answers.hasHighSchool) return false;
+      return true;
+    });
+    const totalPairs = availableSegments.reduce((sum, segment) => sum + segment.grades.length * segment.shifts.length, 0);
+    const completedBefore = availableSegments
+      .filter((segment) => segmentPlan.indexOf(segment) < state.pendingSegment.segmentIndex)
+      .reduce((sum, segment) => sum + segment.grades.length * segment.shifts.length, 0);
+    const completed = completedBefore + state.pendingSegment.pairIndex + Math.min(0.9, (state.pendingSegment.roomIndex || 0) * 0.25);
+    return Math.min(99, Math.max(28, Math.round(28 + (completed / Math.max(1, totalPairs)) * 68)));
+  }
+  const base = { director: 0, unit: 9, yesno: state.currentQuestion.key === "hasHighSchool" ? 22 : 14, roomCount: 34, roomStudents: 48, roomCapacity: 58 };
+  return Math.min(99, base[state.currentQuestion.type] || 10);
+}
+
+function missionLabel() {
+  const q = state.currentQuestion;
+  if (q.type === "director") return { title: "Identificar diretor", hint: "Comece pelo nome de quem está respondendo." };
+  if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
+  if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
+  if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
+  if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
+  if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
+  if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
+  return { title: "Mapa concluído", hint: "Os dados podem ser sincronizados." };
+}
+
+function segmentIntro(segment) {
+  if (segment.key === "infantil") return "Educação Infantil é obrigatória no mapa. Vou passar por Maternal, Pré I e Pré II, manhã e tarde, uma turma por vez.";
+  if (segment.key === "contraturno") return "Agora entra o contraturno. Vou mapear por bloco e turno; onde não houver turma, responda 0.";
+  if (segment.key === "fund1") return "Vamos para o Fundamental 1. Vou seguir do 1º ao 5º ano, manhã e tarde.";
+  if (segment.key === "fund2") return "Agora Fundamental 2. Vou seguir do 6º ao 9º ano, manhã e tarde.";
+  return "Como a unidade possui Ensino Médio, vamos até o 3º ano EM, manhã e tarde.";
+}
+
+function firstName() {
+  return state.director ? state.director.split(" ")[0] : "Diretor";
+}
+
+function shiftText(shift) {
+  const lower = String(shift || "").toLowerCase();
+  if (lower === "integral") return "integral";
+  return lower;
+}
+
+function roomLabel(room) {
+  return `${room.grade} ${room.letter || ""} - ${room.shift}`.trim();
+}
 
 function initBrainScene() {
   if (!brainCanvas) return;
