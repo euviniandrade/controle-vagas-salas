@@ -125,7 +125,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "CACLI": {
     "unit": "CACLI",
@@ -253,7 +254,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "CACLI II": {
     "unit": "CACLI II",
@@ -267,7 +269,21 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "Multisseriada"
+        "note": "Multisseriada",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "Multisseriada"
+          },
+          "Tarde": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "Multisseriada"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -372,6 +388,19 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Maternal: Multisseriada"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha",
+          "Tarde"
+        ],
+        "note": "Multisseriada"
+      }
     ]
   },
   "CAIS": {
@@ -499,7 +528,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "CAEA": {
     "unit": "CAEA",
@@ -623,7 +653,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "CAP": {
     "unit": "CAP",
@@ -751,7 +782,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "CAR": {
     "unit": "CAR",
@@ -765,13 +797,29 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+          }
+        }
       },
       {
         "grade": "Pre I",
         "segment": "Educacao Infantil",
         "shifts": {
           "Tarde": 2
+        },
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Maternal"
+            ],
+            "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+          }
         }
       },
       {
@@ -878,6 +926,18 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Maternal: Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha"
+        ],
+        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+      }
     ]
   },
   "CAEGW": {
@@ -892,7 +952,21 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "MULTISSERIADA"
+        "note": "MULTISSERIADA",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          },
+          "Tarde": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -1001,6 +1075,19 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Maternal: MULTISSERIADA"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha",
+          "Tarde"
+        ],
+        "note": "MULTISSERIADA"
+      }
     ]
   },
   "EAP": {
@@ -1093,7 +1180,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "EATW": {
     "unit": "EATW",
@@ -1107,7 +1195,21 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "MULTISSERIADA"
+        "note": "MULTISSERIADA",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          },
+          "Tarde": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -1192,6 +1294,19 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Maternal: MULTISSERIADA"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha",
+          "Tarde"
+        ],
+        "note": "MULTISSERIADA"
+      }
     ]
   },
   "EAJL": {
@@ -1206,7 +1321,21 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "MULTISSERIADA"
+        "note": "MULTISSERIADA",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          },
+          "Tarde": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "MULTISSERIADA"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -1291,6 +1420,19 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Maternal: MULTISSERIADA"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha",
+          "Tarde"
+        ],
+        "note": "MULTISSERIADA"
+      }
     ]
   },
   "EAA": {
@@ -1305,7 +1447,15 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "Turma da manh\u00e3 multisseriada"
+        "note": "Turma da manh\u00e3 multisseriada",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Pre I"
+            ],
+            "note": "Turma da manh\u00e3 multisseriada"
+          }
+        }
       },
       {
         "grade": "Pre I",
@@ -1313,7 +1463,15 @@ window.UNIT_BLUEPRINTS = {
         "shifts": {
           "Tarde": 1
         },
-        "note": "turma da manh\u00e3 multisseriada"
+        "note": "turma da manh\u00e3 multisseriada",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Maternal"
+            ],
+            "note": "Turma da manh\u00e3 multisseriada"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -1399,6 +1557,18 @@ window.UNIT_BLUEPRINTS = {
     "notes": [
       "Maternal: Turma da manh\u00e3 multisseriada",
       "Pre I: turma da manh\u00e3 multisseriada"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Maternal",
+          "Pre I"
+        ],
+        "shifts": [
+          "Manha"
+        ],
+        "note": "Turma da manh\u00e3 multisseriada"
+      }
     ]
   },
   "EACF": {
@@ -1502,7 +1672,8 @@ window.UNIT_BLUEPRINTS = {
         }
       }
     ],
-    "notes": []
+    "notes": [],
+    "mixedGroups": []
   },
   "EAVB": {
     "unit": "EAVB",
@@ -1516,7 +1687,21 @@ window.UNIT_BLUEPRINTS = {
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "multisseriada"
+        "note": "multisseriada",
+        "mixedWithByShift": {
+          "Manha": {
+            "with": [
+              "Maternal"
+            ],
+            "note": "multisseriada"
+          },
+          "Tarde": {
+            "with": [
+              "Maternal"
+            ],
+            "note": "multisseriada"
+          }
+        }
       },
       {
         "grade": "Pre II",
@@ -1601,6 +1786,19 @@ window.UNIT_BLUEPRINTS = {
     ],
     "notes": [
       "Pre I: multisseriada"
+    ],
+    "mixedGroups": [
+      {
+        "grades": [
+          "Pre I",
+          "Maternal"
+        ],
+        "shifts": [
+          "Manha",
+          "Tarde"
+        ],
+        "note": "multisseriada"
+      }
     ]
   }
 };

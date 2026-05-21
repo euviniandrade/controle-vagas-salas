@@ -456,6 +456,7 @@ function renderRooms() {
         <button type="button" data-room-id="${escapeAttr(room.id)}" ${editable ? "" : "disabled"}>
           <span class="room-name">${escapeHtml(room.grade)} - ${escapeHtml(room.shift)} ${room.letter ? `- ${escapeHtml(room.letter)}` : ""}</span>
           <span class="room-meta">${escapeHtml(room.segment)} · ${room.students || 0}/${room.capacity || 0} alunos · atualizado ${formatDateTime(room.updatedAt)}</span>
+          ${room.mixedWith?.length ? `<span class="room-mixed">Mista com ${escapeHtml(room.mixedWith.join(" + "))}</span>` : ""}
         </button>
         <div class="room-vacancy"><strong>${vacancies}</strong><small>vagas</small></div>
       </article>`;
@@ -1132,7 +1133,9 @@ function getCurrentBlueprint() {
 function blueprintSummaryText(blueprint) {
   const highSchool = blueprint.hasHighSchool ? "com Ensino Médio" : "sem Ensino Médio";
   const notes = blueprint.notes?.length ? ` Observações importadas: ${blueprint.notes.slice(0, 3).join("; ")}.` : "";
-  return `${firstName()}, encontrei a estrutura prevista da unidade ${blueprint.unit}: ${blueprint.totalRooms} turma(s), ${highSchool}. Posso usar essa base e pedir apenas alunos atuais e capacidade de cada sala?${notes}`;
+  const mixed = mixedGroupsText(blueprint);
+  const mixedText = mixed ? ` Atenção: identifiquei turma(s) multisseriada(s): ${mixed}.` : "";
+  return `${firstName()}, encontrei a estrutura prevista da unidade ${blueprint.unit}: ${blueprint.totalRooms} turma(s), ${highSchool}. Posso usar essa base e pedir apenas alunos atuais e capacidade de cada sala?${mixedText}${notes}`;
 }
 
 function startBlueprintCollection() {
@@ -1166,6 +1169,8 @@ function buildRoomsFromBlueprint(blueprint) {
           capacity: defaultCapacityForSegment(displaySegment(gradePlan.segment)),
           students: 0,
           note: gradePlan.note || "",
+          mixedWith: (gradePlan.mixedWithByShift?.[rawShift]?.with || []).map(displayGrade),
+          mixedNote: gradePlan.mixedWithByShift?.[rawShift]?.note || "",
           updatedAt: new Date().toISOString(),
         });
       });
@@ -1220,7 +1225,10 @@ function askRoomCount() {
 
 function askRoomStudents() {
   const room = currentPendingRoom();
-  appendAssistant(`Agora ${roomLabel(room)}: quantos alunos essa turma tem hoje?`);
+  const mixedNotice = room.mixedWith?.length
+    ? `Atenção: ${roomLabel(room)} é uma turma multisseriada/mista com ${room.mixedWith.join(" + ")}. Preencha considerando o total de alunos desta sala conjunta. `
+    : "";
+  appendAssistant(`${mixedNotice}Agora ${roomLabel(room)}: quantos alunos essa turma tem hoje?`);
   state.currentQuestion = { type: "roomStudents" };
 }
 
@@ -1341,6 +1349,19 @@ function displaySegment(value) {
   return String(value || "")
     .replace("Educacao Infantil", "Educação Infantil")
     .replace("Ensino Medio", "Ensino Médio");
+}
+
+function mixedGroupsText(blueprint) {
+  const groups = blueprint?.mixedGroups || [];
+  if (!groups.length) return "";
+  return groups
+    .map((group) => {
+      const grades = (group.grades || []).map(displayGrade).join(" + ");
+      const shifts = (group.shifts || []).map(displayShift).join(" e ");
+      return `${grades}${shifts ? ` (${shifts})` : ""}`;
+    })
+    .slice(0, 4)
+    .join("; ");
 }
 
 function defaultCapacityForSegment(segment) {

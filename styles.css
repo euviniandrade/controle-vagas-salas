@@ -702,6 +702,18 @@ h1 {
 .room-item button:disabled { cursor: default; opacity: 1; }
 .room-name { display: block; font-weight: 950; }
 .room-meta { display: block; margin-top: 3px; color: var(--muted); font-size: .82rem; }
+.room-mixed {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 7px;
+  border: 1px solid rgba(255,212,71,.35);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #ffeaa1;
+  background: rgba(255,212,71,.12);
+  font-size: .72rem;
+  font-weight: 950;
+}
 .room-vacancy {
   min-width: 68px;
   border-radius: 8px;
