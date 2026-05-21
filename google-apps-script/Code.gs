@@ -148,6 +148,7 @@ function ensureSheets(ss) {
 }
 
 function syncPayload(ss, payload) {
+  if (!payload || !payload.submittedAt) return;
   const unit = payload.unit || "";
   const director = payload.director || "";
   const totals = payload.totals || {};

@@ -1,4 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v3";
+﻿const storageKey = "aps-controle-vagas-v4";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -61,11 +62,11 @@ function init() {
   initBrainScene();
   renderAll();
   if (!chatLog.dataset.started) {
-    appendAssistant("Olá! Vou montar o mapa de vagas com você, um passo por vez. Para começar, qual é o seu nome?");
+    appendAssistant(currentQuestionPrompt());
     chatLog.dataset.started = "1";
   }
   renderAnswer();
-  lucide.createIcons();
+  refreshIcons();
 }
 
 function ensureDefaults() {
@@ -76,10 +77,11 @@ function ensureDefaults() {
   state.history ||= [];
   state.movements ||= [];
   state.reports ||= [];
+  state.submittedAt ||= "";
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
+  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -98,7 +100,13 @@ function bindEvents() {
     clearRooms();
   });
   $("#newWeekButton").addEventListener("click", createWeeklySnapshot);
-  $("#syncCloudButton").addEventListener("click", () => syncToCloud("manual"));
+  $("#syncCloudButton").addEventListener("click", () => {
+    if (!state.submittedAt) {
+      appendAssistant("Ainda não enviei nada ao painel administrativo. Primeiro finalize o formulário e confirme o resumo.");
+      return;
+    }
+    syncToCloud("manual");
+  });
   $("#exportCsvButton").addEventListener("click", exportCsv);
   $("#exportJsonButton").addEventListener("click", exportJson);
   $("#importJsonInput").addEventListener("change", importJson);
@@ -113,12 +121,19 @@ function bindEvents() {
   });
 }
 
+function refreshIcons() {
+  window.lucide?.createIcons?.();
+}
+
 function handleAnswerAction(event) {
   const button = event.target.closest("[data-action]");
   if (button) {
     if (button.dataset.action === "daily-update") startDailyUpdate();
     if (button.dataset.action === "report") generateManualReport();
     if (button.dataset.action === "restart") restartGuide();
+    if (button.dataset.action === "confirm-submit") confirmFinalSubmission();
+    if (button.dataset.action === "correct-review") explainCorrectionMode();
+    if (button.dataset.action === "tutorial") appendAssistant(directorTutorialCard());
     return;
   }
   const choice = event.target.closest(".chip[data-value]");
@@ -215,11 +230,21 @@ function initLaunchCanvas() {
 function renderAnswer() {
   const q = state.currentQuestion;
   sendButton.disabled = false;
+  if (q.type === "review") {
+    answerMount.innerHTML = `
+      <div class="chips action-chips">
+        <button class="chip selected" type="button" data-action="confirm-submit">Confirmar e enviar</button>
+        <button class="chip" type="button" data-action="correct-review">Corrigir antes de enviar</button>
+      </div>`;
+    sendButton.disabled = true;
+    return;
+  }
   if (q.type === "done") {
     answerMount.innerHTML = `
       <div class="chips action-chips">
         <button class="chip selected" id="dailyUpdateButton" type="button" data-action="daily-update">Atualizar alunos hoje</button>
         <button class="chip" id="reportButton" type="button" data-action="report">Gerar relatório</button>
+        <button class="chip" type="button" data-action="tutorial">Ver tutorial</button>
         <button class="chip" id="restartGuide" type="button" data-action="restart">Revisar desde o início</button>
       </div>`;
     sendButton.disabled = true;
@@ -324,6 +349,7 @@ function restartGuide() {
   state.answers = {};
   state.movements = [];
   state.reports = [];
+  state.submittedAt = "";
   delete state.updateFlow;
   delete state.pendingSegment;
   chatLog.innerHTML = "";
@@ -350,17 +376,20 @@ function setupDialogOptions() {
 
 function renderAll() {
   const editable = canEditRooms();
+  const submitted = Boolean(state.submittedAt);
   renderUnit();
   renderMetrics();
   renderRooms();
   renderMissionDeck();
   $("#weekLabel").textContent = state.weekId || currentWeek;
   $("#roomsHint").textContent = editable ? "Revise as turmas mapeadas antes do envio final." : "Prévia automática: continue respondendo pelo chat.";
+  $("#syncCloudButton").hidden = !submitted;
+  $("#newWeekButton").hidden = !submitted;
   controlPanel.classList.toggle("is-empty", !state.rooms.length);
   controlPanel.classList.toggle("guide-active", !editable);
   controlPanel.classList.toggle("guide-complete", editable);
   layout?.classList.toggle("has-results", Boolean(state.rooms.length));
-  lucide.createIcons();
+  refreshIcons();
 }
 
 function renderUnit() {
@@ -425,7 +454,7 @@ function renderRooms() {
 }
 
 function canEditRooms() {
-  return state.currentQuestion?.type === "done";
+  return ["review", "done"].includes(state.currentQuestion?.type);
 }
 
 function openRoomDialog(roomId = null) {
@@ -448,7 +477,7 @@ function openRoomDialog(roomId = null) {
   $("#roomStudents").value = room.students || 0;
   $("#roomExitReason").value = "";
   roomDialog.showModal();
-  lucide.createIcons();
+  refreshIcons();
 }
 
 function saveRoomFromDialog() {
@@ -506,6 +535,10 @@ function clearRooms() {
 }
 
 function createWeeklySnapshot() {
+  if (!state.submittedAt) {
+    appendAssistant("A nova semana só fica disponível depois que o primeiro preenchimento for confirmado e enviado.");
+    return;
+  }
   const totals = getTotals();
   state.history.push({ id: crypto.randomUUID(), createdAt: new Date().toISOString(), weekId: state.weekId || currentWeek, unit: state.unit, director: state.director, totals, rooms: structuredClone(state.rooms) });
   state.weeklyDate = new Date().toISOString().slice(0, 10);
@@ -563,10 +596,9 @@ function appendMessage(role, html) {
 
 function persist() {
   localStorage.setItem(storageKey, JSON.stringify(state));
-  saveStatus.textContent = "Salvo localmente";
+  saveStatus.textContent = state.submittedAt ? "Salvo e enviado" : "Salvo neste navegador";
   clearTimeout(persist.timer);
-  persist.timer = setTimeout(() => { saveStatus.textContent = googleReady() ? "Pronto para sincronizar" : "Salvo localmente"; }, 1000);
-  scheduleCloudSync("autosave");
+  persist.timer = setTimeout(() => { saveStatus.textContent = state.submittedAt ? "Gestão ativa" : "Aguardando confirmação final"; }, 1200);
 }
 
 function googleReady() {
@@ -574,7 +606,7 @@ function googleReady() {
 }
 
 function scheduleCloudSync(reason) {
-  if (!googleReady()) return;
+  if (!googleReady() || !state.submittedAt) return;
   clearTimeout(scheduleCloudSync.timer);
   scheduleCloudSync.timer = setTimeout(() => syncToCloud(reason), 1400);
 }
@@ -582,6 +614,10 @@ function scheduleCloudSync(reason) {
 async function syncToCloud(reason = "manual") {
   if (!googleReady()) {
     saveStatus.textContent = "Banco online não configurado";
+    return;
+  }
+  if (!state.submittedAt) {
+    saveStatus.textContent = "Aguardando confirmação final";
     return;
   }
   saveStatus.textContent = "Sincronizando...";
@@ -598,10 +634,11 @@ async function syncToCloud(reason = "manual") {
 
 function buildCloudPayload(reason) {
   const totals = getTotals();
-  return { reason, syncedAt: new Date().toISOString(), unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
+  return { reason, syncedAt: new Date().toISOString(), submittedAt: state.submittedAt || "", unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
 }
 
 function loadState() {
+  legacyStorageKeys.forEach((key) => localStorage.removeItem(key));
   try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch { return {}; }
 }
 
@@ -696,7 +733,7 @@ function applyDailyUpdate() {
   renderAll();
   renderAnswer();
   persist();
-  syncToCloud("daily-movement");
+  if (state.submittedAt) syncToCloud("daily-movement");
 }
 
 function recordMovement(room, details) {
@@ -727,7 +764,7 @@ function generateManualReport() {
   renderAll();
   renderAnswer();
   persist();
-  syncToCloud("report-generated");
+  if (state.submittedAt) syncToCloud("report-generated");
 }
 
 function addReportSnapshot(type) {
@@ -801,6 +838,77 @@ function reportCard(report) {
       ${openRows ? `<ul>${openRows}</ul>` : ""}
       <em>O relatório foi enviado para sincronização e aparecerá no painel administrativo assim que o banco receber os dados.</em>
     </div>`;
+}
+
+function reviewChecklistCard(report) {
+  return `
+    <div class="review-card">
+      <h3>Conferência antes do envio</h3>
+      <p>Confira se unidade, diretor, salas, alunos e capacidades estão corretos. Nada foi enviado ao painel administrativo ainda.</p>
+      <ul>
+        <li><strong>Unidade</strong><span>${escapeHtml(report.unit || "-")}</span></li>
+        <li><strong>Diretor</strong><span>${escapeHtml(report.director || "-")}</span></li>
+        <li><strong>Salas mapeadas</strong><span>${report.totals.rooms}</span></li>
+        <li><strong>Vagas disponíveis</strong><span>${report.totals.vacancies}</span></li>
+      </ul>
+      <em>Se precisar corrigir, escolha “Corrigir antes de enviar” e clique na turma desejada no painel lateral.</em>
+    </div>`;
+}
+
+function confirmFinalSubmission() {
+  state.submittedAt = new Date().toISOString();
+  state.currentQuestion = { type: "done" };
+  appendAssistant(`Obrigado, ${firstName()}. Recebi a confirmação e agora vou enviar o mapa de vagas para o painel administrativo.`);
+  appendAssistant(directorTutorialCard());
+  renderAll();
+  renderAnswer();
+  persist();
+  syncToCloud("completed-guide");
+}
+
+function explainCorrectionMode() {
+  appendAssistant("Perfeito. Use o painel lateral para clicar na turma que precisa de ajuste. Depois que corrigir, clique em “Confirmar e enviar”. O painel administrativo continuará sem receber nada até essa confirmação.");
+  renderAll();
+  renderAnswer();
+}
+
+function directorTutorialCard() {
+  return `
+    <div class="tutorial-card">
+      <span>Guia rápido do gestor</span>
+      <h3>Como usar a plataforma no dia a dia</h3>
+      <ol>
+        <li><strong>Primeiro acesso:</strong> preencha o mapa até o final e confirme o resumo.</li>
+        <li><strong>Conta do gestor:</strong> acesse a página do gestor e solicite sua conta com nome, e-mail e unidade.</li>
+        <li><strong>Atualização diária:</strong> após o envio, use “Atualizar alunos hoje” para registrar entrada, saída ou ajuste de total.</li>
+        <li><strong>Saídas:</strong> sempre informe o motivo. Isso ajuda a APS a acompanhar evasão e agir com rapidez.</li>
+        <li><strong>Relatórios:</strong> gere relatórios sempre que quiser uma leitura objetiva da unidade.</li>
+      </ol>
+      <a href="./admin.html" target="_blank" rel="noopener">Abrir página do gestor</a>
+    </div>`;
+}
+
+function currentQuestionPrompt() {
+  const q = state.currentQuestion || { type: "director" };
+  if (q.type === "director") return "Olá! Vou montar o mapa de vagas com você, um passo por vez. Para começar, qual é o seu nome?";
+  if (q.type === "unit") return `${firstName()}, confirme a unidade para continuarmos.`;
+  if (q.type === "yesno" && q.key === "hasContraturno") return `${firstName()}, a unidade oferece contraturno?`;
+  if (q.type === "yesno" && q.key === "hasHighSchool") return "A unidade possui Ensino Médio?";
+  if (q.type === "roomCount" && state.pendingSegment) return `${firstName()}, ${currentRoomCountText()}`;
+  if (q.type === "roomStudents" && state.pendingSegment) return `Agora ${roomLabel(currentPendingRoom())}: quantos alunos essa turma tem hoje?`;
+  if (q.type === "roomCapacity" && state.pendingSegment) return `E qual é a capacidade máxima da sala ${roomLabel(currentPendingRoom())}?`;
+  if (q.type === "review") return "Confira o resumo antes do envio final. Se estiver correto, confirme para enviar ao painel administrativo.";
+  if (q.type === "done") return "Mapa confirmado. Você já pode atualizar entradas e saídas diariamente ou gerar novos relatórios.";
+  if (q.type === "dailyRoom") return `${firstName()}, qual sala teve entrada, saída ou ajuste de alunos hoje?`;
+  if (q.type === "dailyType") return "Você quer registrar entrada, saída ou ajuste do total?";
+  if (q.type === "dailyQty") return "Informe a quantidade de alunos.";
+  if (q.type === "dailyReason") return "Qual foi o motivo da saída?";
+  return "Vamos continuar de onde paramos.";
+}
+
+function currentRoomCountText() {
+  const pair = currentPendingPair();
+  return `quantas turmas de ${pair.grade} funcionam no turno da ${shiftText(pair.shift)}? Se não tiver, responda 0.`;
 }
 
 function handleAnswer(q, value) {
@@ -932,8 +1040,7 @@ function startNextSegment(index) {
 }
 
 function askRoomCount() {
-  const pair = currentPendingPair();
-  appendAssistant(`${firstName()}, quantas turmas de ${pair.grade} funcionam no turno da ${shiftText(pair.shift)}? Se não tiver, responda 0.`);
+  appendAssistant(`${firstName()}, ${currentRoomCountText()}`);
   state.currentQuestion = { type: "roomCount" };
 }
 
@@ -977,14 +1084,14 @@ function currentPendingRoom() {
 function finishGuide() {
   const totals = getTotals();
   const ending = state.answers.hasHighSchool ? "até o 3º ano do Ensino Médio" : "até o 9º ano";
-  appendAssistant(`${firstName()}, mapa concluído ${ending}. Temos ${totals.rooms} sala(s), ${totals.students} aluno(s) e ${totals.vacancies} vaga(s) disponíveis agora.`);
+  appendAssistant(`${firstName()}, mapa concluído ${ending}. Antes de enviar para o painel administrativo, confira o resumo abaixo com calma.`);
   const report = addReportSnapshot("final-guide");
-  appendAssistant(reportCard(report));
-  state.currentQuestion = { type: "done" };
-  syncToCloud("completed-guide");
+  appendAssistant(`${reportCard(report)}${reviewChecklistCard(report)}`);
+  state.currentQuestion = { type: "review" };
 }
 
 function calculateProgress() {
+  if (state.currentQuestion.type === "review") return 98;
   if (state.currentQuestion.type === "done") return 100;
   if (state.pendingSegment) {
     const availableSegments = segmentPlan.filter((segment) => {
@@ -1013,6 +1120,7 @@ function missionLabel() {
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
   if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
+  if (q.type === "review") return { title: "Conferir resumo", hint: "Nada será enviado antes da sua confirmação." };
   if (q.type === "dailyRoom") return { title: "Atualização diária", hint: "Escolha a sala que teve movimento." };
   if (q.type === "dailyType") return { title: "Entrada ou saída", hint: "Registre o tipo de movimentação." };
   if (q.type === "dailyQty") return { title: "Quantidade", hint: "Informe o número de alunos movimentados." };
@@ -1220,3 +1328,5 @@ function initClassroomFallback() {
   window.addEventListener("resize", resize);
   requestAnimationFrame(draw);
 }
+
+

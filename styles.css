@@ -481,19 +481,19 @@ h1 {
 }
 .assistant .bubble { color: #f7fbff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); backdrop-filter: blur(14px); }
 .user .bubble { color: white; background: linear-gradient(135deg, #256d93, #743a73); box-shadow: 0 18px 42px rgba(77,124,255,.18); }
-.report-card {
+.report-card, .review-card, .tutorial-card {
   display: grid;
   gap: 12px;
   min-width: min(620px, 100%);
 }
-.report-card > span, .report-card em {
+.report-card > span, .report-card em, .review-card em, .tutorial-card > span {
   color: var(--aqua);
   font-size: .78rem;
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-.report-card h3 { margin: 0; font-size: 1.55rem; }
+.report-card h3, .review-card h3, .tutorial-card h3 { margin: 0; font-size: 1.55rem; }
 .report-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -509,15 +509,25 @@ h1 {
   font-size: 1.25rem;
 }
 .report-kpis small { color: var(--muted); font-size: .72rem; }
-.report-card ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.report-card li {
+.report-card ul, .review-card ul, .tutorial-card ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.report-card li, .review-card li, .tutorial-card li {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid rgba(255,255,255,.1);
   padding-bottom: 6px;
 }
-.report-card li span { color: var(--muted); }
+.report-card li span, .review-card li span, .tutorial-card li { color: var(--muted); }
+.tutorial-card li { display: block; }
+.tutorial-card a {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #07101f;
+  background: linear-gradient(90deg, var(--aqua), var(--gold));
+  font-weight: 950;
+  text-decoration: none;
+}
 .chips { display: flex; flex-wrap: wrap; gap: 9px; }
 .chip {
   min-height: 44px;

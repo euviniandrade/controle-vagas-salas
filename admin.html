@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Controle de Vagas APS</title>
-    <link rel="stylesheet" href="./admin.css?v=20260521-reports" />
-    <script src="./config.js?v=20260521-reports"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260521-cleanconfirm" />
+    <script src="./config.js?v=20260521-cleanconfirm"></script>
   </head>
   <body>
     <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
@@ -26,6 +26,16 @@
           </label>
           <button type="submit">Entrar no painel</button>
           <p id="loginStatus" class="status-line">Acesso separado da tela dos diretores.</p>
+          <details class="access-request">
+            <summary>Diretor: solicitar acesso de gestor</summary>
+            <div id="publicAccessForm" class="public-access-form">
+              <input id="publicAccessName" placeholder="Nome completo" />
+              <input id="publicAccessEmail" type="email" placeholder="Email" />
+              <input id="publicAccessUnit" placeholder="Unidade" />
+              <button id="publicAccessButton" type="button">Solicitar acesso</button>
+              <small id="publicAccessStatus">A solicitação ficará pendente para liberação administrativa.</small>
+            </div>
+          </details>
         </form>
       </section>
 
@@ -111,6 +121,6 @@
         </section>
       </section>
     </main>
-    <script type="module" src="./admin.js?v=20260521-reports"></script>
+    <script type="module" src="./admin.js?v=20260521-cleanconfirm"></script>
   </body>
 </html>

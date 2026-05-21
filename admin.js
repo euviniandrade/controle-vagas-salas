@@ -13,6 +13,7 @@ function initAdmin() {
   $("#refreshButton").addEventListener("click", loadDashboard);
   $("#unitSearch").addEventListener("input", renderDashboard);
   $("#accessForm").addEventListener("submit", createAccessRequest);
+  $("#publicAccessButton")?.addEventListener("click", createPublicAccessRequest);
   if (localStorage.getItem(tokenKey)) showDashboard();
 }
 
@@ -71,6 +72,25 @@ async function createAccessRequest(event) {
   if (result.ok) {
     form.reset();
     await loadDashboard();
+  }
+}
+
+async function createPublicAccessRequest() {
+  const status = $("#publicAccessStatus");
+  status.textContent = "Enviando solicitação...";
+  try {
+    const result = await api("requestAccess", {
+      name: $("#publicAccessName").value.trim(),
+      email: $("#publicAccessEmail").value.trim(),
+      unit: $("#publicAccessUnit").value.trim(),
+    });
+    if (!result.ok) throw new Error(result.error || "Não consegui registrar a solicitação.");
+    $("#publicAccessName").value = "";
+    $("#publicAccessEmail").value = "";
+    $("#publicAccessUnit").value = "";
+    status.textContent = "Solicitação enviada. A liberação será feita pela administração.";
+  } catch (error) {
+    status.textContent = error.message || "Falha ao solicitar acesso.";
   }
 }
 
