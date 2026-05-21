@@ -733,10 +733,128 @@ function roomLabel(room) {
   return `${room.grade} ${room.letter || ""} - ${room.shift}`.trim();
 }
 
-function initBrainScene() {
+async function initBrainScene() {
   if (!brainCanvas) return;
+  try {
+    const THREE = await import("https://unpkg.com/three@0.160.0/build/three.module.js");
+    initClassroom3d(THREE);
+  } catch {
+    initClassroomFallback();
+  }
+}
+
+function initClassroom3d(THREE) {
+  const renderer = new THREE.WebGLRenderer({ canvas: brainCanvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.set(7.5, 7.2, 9.5);
+  camera.lookAt(0, 0, 0);
+
+  const room = new THREE.Group();
+  room.rotation.y = -0.52;
+  scene.add(room);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 1.7);
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(4, 8, 5);
+  scene.add(ambient, key);
+
+  const materials = {
+    floor: new THREE.MeshStandardMaterial({ color: 0x10231f, roughness: 0.75, metalness: 0.1 }),
+    wall: new THREE.MeshStandardMaterial({ color: 0x15313a, roughness: 0.55, metalness: 0.18, transparent: true, opacity: 0.82 }),
+    desk: new THREE.MeshStandardMaterial({ color: 0xf4c95d, roughness: 0.46, metalness: 0.08 }),
+    seat: new THREE.MeshStandardMaterial({ color: 0x18d2cf, roughness: 0.36, metalness: 0.22 }),
+    filled: new THREE.MeshStandardMaterial({ color: 0xff6b8f, roughness: 0.4, metalness: 0.18 }),
+    board: new THREE.MeshStandardMaterial({ color: 0x193f39, roughness: 0.5, metalness: 0.1 }),
+    glowA: new THREE.MeshStandardMaterial({ color: 0x19f1ff, emissive: 0x0b7f8a, emissiveIntensity: 0.7 }),
+    glowB: new THREE.MeshStandardMaterial({ color: 0xffd447, emissive: 0x806000, emissiveIntensity: 0.55 }),
+  };
+
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(8.5, 0.12, 6.6), materials.floor);
+  floor.position.y = -0.08;
+  room.add(floor);
+
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(8.5, 2.8, 0.1), materials.wall);
+  backWall.position.set(0, 1.35, -3.35);
+  room.add(backWall);
+
+  const board = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.25, 0.12), materials.board);
+  board.position.set(0, 1.55, -3.25);
+  room.add(board);
+
+  const teacherDesk = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.25, 0.55), materials.desk);
+  teacherDesk.position.set(0, 0.42, -2.35);
+  room.add(teacherDesk);
+
+  const deskGeo = new THREE.BoxGeometry(0.56, 0.18, 0.42);
+  const seatGeo = new THREE.BoxGeometry(0.42, 0.22, 0.28);
+  const deskGroup = new THREE.Group();
+  for (let row = 0; row < 4; row += 1) {
+    for (let col = 0; col < 5; col += 1) {
+      const x = (col - 2) * 1.15;
+      const z = -0.95 + row * 1.02;
+      const desk = new THREE.Mesh(deskGeo, (row + col) % 4 === 0 ? materials.filled : materials.desk);
+      desk.position.set(x, 0.34, z);
+      const seat = new THREE.Mesh(seatGeo, materials.seat);
+      seat.position.set(x, 0.24, z + 0.38);
+      deskGroup.add(desk, seat);
+    }
+  }
+  room.add(deskGroup);
+
+  const planGroup = new THREE.Group();
+  const nodePositions = [
+    [-3.2, 2.4, -1.2], [-2.2, 2.85, -.2], [-1.2, 2.35, .8],
+    [1.2, 2.75, -1.0], [2.4, 2.4, .2], [3.25, 2.9, 1.15],
+  ];
+  const nodes = nodePositions.map((position, index) => {
+    const node = new THREE.Mesh(new THREE.SphereGeometry(index % 2 ? 0.09 : 0.12, 18, 18), index % 2 ? materials.glowB : materials.glowA);
+    node.position.set(...position);
+    planGroup.add(node);
+    return node;
+  });
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x8befff, transparent: true, opacity: 0.45 });
+  for (let index = 0; index < nodes.length - 1; index += 1) {
+    const geometry = new THREE.BufferGeometry().setFromPoints([nodes[index].position, nodes[index + 1].position]);
+    planGroup.add(new THREE.Line(geometry, lineMaterial));
+  }
+  room.add(planGroup);
+
+  const grid = new THREE.GridHelper(8.5, 10, 0x19f1ff, 0x38505a);
+  grid.position.y = 0.01;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.22;
+  room.add(grid);
+
+  function resize() {
+    const rect = brainCanvas.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+
+  function animate(time) {
+    const progress = calculateProgress() / 100;
+    room.rotation.y = -0.54 + Math.sin(time * 0.00045) * 0.08;
+    room.rotation.x = -0.04 + progress * 0.04;
+    deskGroup.children.forEach((item, index) => {
+      item.position.y += Math.sin(time * 0.002 + index) * 0.0009;
+    });
+    planGroup.rotation.y = Math.sin(time * 0.0007) * 0.18;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+  requestAnimationFrame(animate);
+}
+
+function initClassroomFallback() {
   const ctx = brainCanvas.getContext("2d");
-  const points = Array.from({ length: 86 }, (_, index) => ({ angle: index * 0.52, rx: 0.16 + (index % 6) * 0.062 + Math.random() * 0.03, ry: 0.16 + ((5 - index % 6) * 0.03) + Math.random() * 0.05, speed: 0.00016 + Math.random() * 0.00022, phase: Math.random() * Math.PI * 2, pulse: Math.random() * 0.8 }));
   function resize() {
     const rect = brainCanvas.getBoundingClientRect();
     const scale = Math.min(window.devicePixelRatio || 1, 2);
@@ -744,43 +862,49 @@ function initBrainScene() {
     brainCanvas.height = Math.max(1, Math.floor(rect.height * scale));
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
   }
-  function position(point, time, rect) {
-    const cx = rect.width * 0.55;
-    const cy = rect.height * 0.48;
-    const wobble = Math.sin(time * point.speed + point.phase) * 18;
-    return { x: cx + Math.cos(point.angle + wobble * 0.002) * rect.width * point.rx, y: cy + Math.sin(point.angle * 1.18 + wobble * 0.003) * rect.height * point.ry };
-  }
   function draw(time) {
     const rect = brainCanvas.getBoundingClientRect();
     if (!rect.width || !rect.height) { requestAnimationFrame(draw); return; }
     ctx.clearRect(0, 0, rect.width, rect.height);
-    const progress = calculateProgress() / 100;
-    const positions = points.map((point) => position(point, time, rect));
-    const glow = ctx.createRadialGradient(rect.width * 0.58, rect.height * 0.48, 20, rect.width * 0.58, rect.height * 0.48, rect.width * 0.55);
-    glow.addColorStop(0, "rgba(25,241,255,.22)");
-    glow.addColorStop(0.42, "rgba(255,212,71,.12)");
-    glow.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    for (let i = 0; i < positions.length; i += 1) {
-      for (let j = i + 1; j < positions.length; j += 1) {
-        const distance = Math.hypot(positions[i].x - positions[j].x, positions[i].y - positions[j].y);
-        if (distance < 82) {
-          ctx.strokeStyle = `rgba(25,241,255,${(1 - distance / 82) * (0.14 + progress * 0.2)})`;
-          ctx.beginPath();
-          ctx.moveTo(positions[i].x, positions[i].y);
-          ctx.lineTo(positions[j].x, positions[j].y);
-          ctx.stroke();
-        }
+    const cx = rect.width * 0.62;
+    const cy = rect.height * 0.55;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.2 + Math.sin(time * 0.0007) * 0.04);
+    const floor = ctx.createLinearGradient(-260, -180, 260, 220);
+    floor.addColorStop(0, "rgba(25,241,255,.12)");
+    floor.addColorStop(1, "rgba(255,212,71,.14)");
+    ctx.fillStyle = floor;
+    ctx.strokeStyle = "rgba(255,255,255,.16)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-300, -150);
+    ctx.lineTo(220, -220);
+    ctx.lineTo(330, 160);
+    ctx.lineTo(-220, 230);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    for (let row = 0; row < 4; row += 1) {
+      for (let col = 0; col < 5; col += 1) {
+        const x = -180 + col * 82;
+        const y = -70 + row * 60;
+        ctx.fillStyle = (row + col) % 4 === 0 ? "rgba(255,107,143,.85)" : "rgba(255,212,71,.9)";
+        ctx.fillRect(x, y, 48, 24);
+        ctx.fillStyle = "rgba(25,241,255,.8)";
+        ctx.fillRect(x + 8, y + 31, 32, 18);
       }
     }
-    positions.forEach((pos, index) => {
-      const radius = 2 + points[index].pulse * 2 + progress * 1.4;
+    ctx.restore();
+    ctx.fillStyle = "rgba(25,241,255,.8)";
+    for (let i = 0; i < 20; i += 1) {
+      const angle = i * 0.7 + time * 0.0005;
+      const x = rect.width * 0.72 + Math.cos(angle) * (80 + (i % 5) * 22);
+      const y = rect.height * 0.34 + Math.sin(angle * 1.2) * (42 + (i % 4) * 18);
       ctx.beginPath();
-      ctx.fillStyle = index % 7 === 0 ? "rgba(255,212,71,.95)" : "rgba(25,241,255,.72)";
-      ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+      ctx.arc(x, y, i % 5 === 0 ? 5 : 3, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
     requestAnimationFrame(draw);
   }
   resize();

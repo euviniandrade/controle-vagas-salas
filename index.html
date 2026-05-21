@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle de Vagas por Sala - APS</title>
-    <link rel="stylesheet" href="./styles.css?v=20260521-roomflow" />
-    <script src="./config.js?v=20260521-roomflow"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260521-classroom" />
+    <script src="./config.js?v=20260521-classroom"></script>
   </head>
   <body>
-    <section id="launchIntro" class="launch-intro" aria-label="Inicio da experiencia">
+    <section id="launchIntro" class="launch-intro" aria-label="Início da experiência">
       <canvas id="launchCanvas" aria-hidden="true"></canvas>
       <div class="launch-panel">
         <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
-        <p class="eyebrow">Controle de Vagas APS</p>
-        <h1>Ativar radar neural</h1>
-        <p>Uma experiencia guiada, visual e objetiva para mapear cada sala e encontrar as vagas disponiveis para a campanha.</p>
-        <button id="startExperience" type="button">Iniciar experiencia</button>
+        <p class="eyebrow">Controle institucional APS</p>
+        <h1>Mapa de Vagas por Sala</h1>
+        <p>Uma coleta guiada para registrar turmas, alunos, capacidade máxima e vagas disponíveis em cada unidade.</p>
+        <button id="startExperience" type="button">Iniciar preenchimento</button>
       </div>
     </section>
 
@@ -32,14 +32,18 @@
         <a class="brand" href="./index.html" aria-label="Controle de vagas APS">
           <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
           <span>
-            <strong>APS Neural Seats</strong>
-            <small>Mapa inteligente de matriculas</small>
+            <strong>Controle de Vagas por Sala</strong>
+            <small>Campanha de Matrículas APS 2026</small>
           </span>
         </a>
-        <div class="live-strip" aria-hidden="true">
-          <span>AI</span><span>Vagas</span><span>Salas</span><span>2026</span>
-        </div>
-        <nav class="top-actions" aria-label="Acoes do sistema">
+        <ol class="journey-map" aria-label="Fluxo de preenchimento">
+          <li><span>01</span>Diretor</li>
+          <li><span>02</span>Unidade</li>
+          <li><span>03</span>Estrutura</li>
+          <li><span>04</span>Turmas</li>
+          <li><span>05</span>Resultado</li>
+        </ol>
+        <nav class="top-actions" aria-label="Ações do sistema">
           <button id="syncCloudButton" class="icon-btn ghost" type="button" title="Sincronizar com banco online" aria-label="Sincronizar com banco online"><i data-lucide="cloud-upload"></i></button>
           <button id="newWeekButton" class="icon-btn ghost" type="button" title="Registrar nova semana" aria-label="Registrar nova semana"><i data-lucide="calendar-plus"></i></button>
           <button id="exportCsvButton" class="icon-btn ghost" type="button" title="Exportar CSV" aria-label="Exportar CSV"><i data-lucide="file-spreadsheet"></i></button>
@@ -52,48 +56,46 @@
       </header>
 
       <main class="layout">
-        <section class="conversation" aria-label="Formulario conversacional">
+        <section class="conversation" aria-label="Formulário conversacional">
           <div class="chat-head">
-            <canvas id="brainScene" class="brain-scene" aria-hidden="true"></canvas>
+            <canvas id="brainScene" class="classroom-scene" aria-hidden="true"></canvas>
             <div class="data-rain" aria-hidden="true"></div>
-            <div class="orbital-hud" aria-hidden="true">
+            <div class="education-stack" aria-hidden="true">
+              <span>Espelho de classe</span>
               <span>Capacidade</span>
-              <span>Alunos</span>
-              <span>Vagas</span>
               <span>Turnos</span>
+              <span>Vagas</span>
             </div>
             <div class="hero-copy">
-              <p class="eyebrow">Experiencia guiada para diretores</p>
-              <h1>Radar neural de vagas</h1>
-              <p class="hero-subtitle">Uma jornada interativa que transforma respostas simples em visao de campanha: salas, alunos, capacidade e vagas em tempo real.</p>
+              <p class="eyebrow">Assistente guiado para diretores</p>
+              <h1>Controle de Vagas por Sala</h1>
+              <p class="hero-subtitle">Preenchimento simples, turma por turma, com leitura imediata de capacidade, alunos atuais e vagas disponíveis para a campanha.</p>
             </div>
             <span id="saveStatus" class="save-status">Pronto</span>
           </div>
 
-          <div class="mission-deck" aria-label="Progresso do preenchimento">
-            <article class="mission-card current">
-              <span>Missao atual</span>
+          <div class="collection-framework" aria-label="Roteiro de preenchimento">
+            <div class="framework-current">
+              <span>Etapa atual</span>
               <strong id="missionTitle">Identificar unidade</strong>
-              <em id="missionHint">Comece pelo diretor responsavel.</em>
-            </article>
-            <article class="mission-card">
-              <span>Ritmo</span>
+              <em id="missionHint">Comece pelo diretor responsável.</em>
+            </div>
+            <div class="framework-meter">
+              <span>Progresso</span>
               <strong id="progressText">0%</strong>
               <div class="neon-progress"><i id="progressBar"></i></div>
-            </article>
-            <article class="mission-card accent">
-              <span>Resultado final</span>
+            </div>
+            <ol class="process-steps">
+              <li class="stage-dot active"><span>01</span>Diretor</li>
+              <li class="stage-dot"><span>02</span>Unidade</li>
+              <li class="stage-dot"><span>03</span>Estrutura</li>
+              <li class="stage-dot"><span>04</span>Turmas</li>
+              <li class="stage-dot"><span>05</span>Vagas</li>
+            </ol>
+            <div class="framework-result">
+              <span>Saída</span>
               <strong id="resultPreview">Vagas em tempo real</strong>
-              <em>Capacidade, alunos e saldo por sala.</em>
-            </article>
-          </div>
-
-          <div class="stage-strip" aria-label="Etapas do roteiro">
-            <span class="stage-dot active">Diretor</span>
-            <span class="stage-dot">Unidade</span>
-            <span class="stage-dot">Segmentos</span>
-            <span class="stage-dot">Salas</span>
-            <span class="stage-dot">Vagas</span>
+            </div>
           </div>
 
           <div id="chatLog" class="chat-log" aria-live="polite"></div>
@@ -107,9 +109,9 @@
         <aside class="control-panel is-empty" aria-label="Salas cadastradas">
           <section class="unit-card">
             <div class="unit-main">
-              <span id="unitBadge" class="badge">Unidade nao iniciada</span>
+              <span id="unitBadge" class="badge">Unidade não iniciada</span>
               <h2 id="unitTitle">Comece pela unidade</h2>
-              <p id="unitSubtitle">O assistente vai perguntar por diretor, segmentos, turnos e salas.</p>
+              <p id="unitSubtitle">O assistente vai registrar segmentos, turnos, turmas e capacidade.</p>
             </div>
             <div class="health-ring" style="--filled: 0%">
               <span id="vacancyTotal">0</span>
@@ -138,7 +140,7 @@
             <button class="segment-tab" type="button" data-segment-filter="Contraturno">Contraturno</button>
             <button class="segment-tab" type="button" data-segment-filter="Fundamental 1">Fund. 1</button>
             <button class="segment-tab" type="button" data-segment-filter="Fundamental 2">Fund. 2</button>
-            <button class="segment-tab" type="button" data-segment-filter="Ensino Médio">Medio</button>
+            <button class="segment-tab" type="button" data-segment-filter="Ensino Médio">Médio</button>
           </section>
 
           <section class="room-tools">
@@ -150,9 +152,9 @@
             <div class="rooms-head">
               <div>
                 <span id="weekLabel" class="week-pill">Semana atual</span>
-                <h3>Revise as salas cadastradas</h3>
+                <h3>Espelho de salas</h3>
               </div>
-              <p id="roomsHint">Toque em uma sala para informar capacidade e alunos atuais.</p>
+              <p id="roomsHint">As turmas aparecerão aqui conforme o diretor responde.</p>
             </div>
             <div id="roomsList" class="rooms-list"></div>
           </section>
@@ -173,8 +175,8 @@
           <label>Segmento
             <select id="roomSegment" required></select>
           </label>
-          <label>Serie/turma
-            <input id="roomGrade" type="text" required placeholder="Ex.: 1 Ano" />
+          <label>Série/turma
+            <input id="roomGrade" type="text" required placeholder="Ex.: 1º Ano" />
           </label>
           <label>Turno
             <select id="roomShift" required></select>
@@ -182,7 +184,7 @@
           <label>Letra
             <input id="roomLetter" type="text" maxlength="3" placeholder="A" />
           </label>
-          <label>Capacidade maxima
+          <label>Capacidade máxima
             <input id="roomCapacity" type="number" min="0" step="1" required />
           </label>
           <label>Alunos atuais
@@ -198,6 +200,6 @@
     </dialog>
 
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./app.js?v=20260521-roomflow"></script>
+    <script type="module" src="./app.js?v=20260521-classroom"></script>
   </body>
 </html>
