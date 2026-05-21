@@ -37,6 +37,7 @@ function routeApi(params) {
     if (action === "adminLogin") return adminLogin(params);
     if (action === "adminDashboard") return adminDashboard(params);
     if (action === "requestAccess") return requestAccess(params);
+    if (action === "forgotPassword") return forgotPassword(params);
     if (action === "aiCoach") return aiCoach(params);
     return { ok: false, error: "Acao nao reconhecida." };
   } catch (error) {
@@ -93,6 +94,45 @@ function adminLogin(params) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put("admin:" + token, email, 21600);
   return { ok: true, token: token, email: email };
+}
+
+function forgotPassword(params) {
+  const email = String(params.email || "").trim().toLowerCase();
+  if (!email) return { ok: false, error: "Informe o email." };
+  const ss = SpreadsheetApp.openById(DEFAULT_SPREADSHEET_ID);
+  ensureSheets(ss);
+  appendRows(ss.getSheetByName("Eventos"), [[
+    new Date(),
+    "forgot-password",
+    "",
+    email,
+    "",
+    0,
+    0,
+    safeJson({ email: email, requestedAt: new Date().toISOString() }),
+  ]]);
+
+  if (email === ADMIN_EMAIL.toLowerCase()) {
+    MailApp.sendEmail({
+      to: ADMIN_EMAIL,
+      subject: "Recuperacao de senha - Controle de Vagas APS",
+      body: [
+        "Solicitacao de recuperacao recebida.",
+        "",
+        "Email: " + ADMIN_EMAIL,
+        "Senha administrativa atual: " + ADMIN_PASSWORD,
+        "",
+        "Se voce nao solicitou isso, revise o acesso ao Apps Script.",
+      ].join("\n"),
+    });
+  } else {
+    MailApp.sendEmail({
+      to: ADMIN_EMAIL,
+      subject: "Solicitacao de recuperacao de acesso - Controle de Vagas APS",
+      body: "O email " + email + " solicitou recuperacao de acesso ao painel.",
+    });
+  }
+  return { ok: true };
 }
 
 function requireAdmin(token) {

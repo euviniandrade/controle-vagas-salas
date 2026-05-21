@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Controle de Vagas APS</title>
-    <link rel="stylesheet" href="./admin.css?v=20260521-blueprints" />
-    <script src="./config.js?v=20260521-blueprints"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260521-adminlogin" />
+    <script src="./config.js?v=20260521-adminlogin"></script>
   </head>
   <body>
     <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
@@ -26,6 +26,14 @@
           </label>
           <button type="submit">Entrar no painel</button>
           <p id="loginStatus" class="status-line">Acesso separado da tela dos diretores.</p>
+          <details class="access-request">
+            <summary>Esqueci minha senha</summary>
+            <div class="public-access-form">
+              <input id="recoveryEmail" type="email" placeholder="Email cadastrado" />
+              <button id="recoveryButton" type="button">Enviar recuperação</button>
+              <small id="recoveryStatus">Se o email estiver autorizado, enviaremos as instruções de acesso.</small>
+            </div>
+          </details>
           <details class="access-request">
             <summary>Diretor: solicitar acesso de gestor</summary>
             <div id="publicAccessForm" class="public-access-form">
@@ -132,6 +140,6 @@
         </section>
       </section>
     </main>
-    <script type="module" src="./admin.js?v=20260521-blueprints"></script>
+    <script type="module" src="./admin.js?v=20260521-adminlogin2"></script>
   </body>
 </html>

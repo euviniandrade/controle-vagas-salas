@@ -14,7 +14,8 @@ function initAdmin() {
   $("#unitSearch").addEventListener("input", renderDashboard);
   $("#accessForm").addEventListener("submit", createAccessRequest);
   $("#publicAccessButton")?.addEventListener("click", createPublicAccessRequest);
-  if (localStorage.getItem(tokenKey)) showDashboard();
+  $("#recoveryButton")?.addEventListener("click", requestPasswordRecovery);
+  if (localStorage.getItem(tokenKey)) restoreSession();
 }
 
 async function login(event) {
@@ -27,7 +28,8 @@ async function login(event) {
     });
     if (!result.ok) throw new Error(result.error || "Login não autorizado.");
     localStorage.setItem(tokenKey, result.token);
-    showDashboard();
+    setLoginStatus("Carregando painel...");
+    if (await loadDashboard()) showDashboard();
   } catch (error) {
     setLoginStatus(error.message || "Não foi possível entrar.");
   }
@@ -36,28 +38,59 @@ async function login(event) {
 function showDashboard() {
   $("#loginView").hidden = true;
   $("#dashboardView").hidden = false;
-  loadDashboard();
+  setLoginStatus("");
   clearInterval(refreshTimer);
   refreshTimer = setInterval(loadDashboard, 30000);
 }
 
+function showLogin(message = "") {
+  clearInterval(refreshTimer);
+  $("#dashboardView").hidden = true;
+  $("#loginView").hidden = false;
+  if (message) setLoginStatus(message);
+}
+
+async function restoreSession() {
+  showLogin("Validando sessão salva...");
+  if (await loadDashboard()) showDashboard();
+}
+
 async function loadDashboard() {
   const button = $("#refreshButton");
-  button.textContent = "Atualizando...";
+  if (button) button.textContent = "Atualizando...";
   try {
     const result = await api("adminDashboard", { token: localStorage.getItem(tokenKey) || "" });
     if (!result.ok) throw new Error(result.error || "Falha ao ler dados.");
     dashboardData = result.data || dashboardData;
     renderDashboard();
+    return true;
   } catch (error) {
     if (String(error.message || "").includes("Sessão")) {
       localStorage.removeItem(tokenKey);
-      $("#dashboardView").hidden = true;
-      $("#loginView").hidden = false;
+      showLogin(error.message || "Sessão expirada. Faça login novamente.");
     }
     setLoginStatus(error.message || "Falha ao carregar painel.");
+    return false;
   } finally {
-    button.textContent = "Atualizar dados";
+    if (button) button.textContent = "Atualizar dados";
+  }
+}
+
+async function requestPasswordRecovery() {
+  const status = $("#recoveryStatus");
+  const email = $("#recoveryEmail").value.trim();
+  if (!email) {
+    status.textContent = "Informe o email para recuperar o acesso.";
+    return;
+  }
+  status.textContent = "Enviando instruções...";
+  try {
+    const result = await api("forgotPassword", { email });
+    if (!result.ok) throw new Error(result.error || "Não consegui enviar a recuperação.");
+    $("#recoveryEmail").value = "";
+    status.textContent = "Se o email estiver cadastrado, as instruções foram enviadas.";
+  } catch (error) {
+    status.textContent = error.message || "Falha ao solicitar recuperação.";
   }
 }
 
