@@ -18,6 +18,16 @@ const segmentPlan = [
   { key: "medio", name: "Ensino Médio", grades: ["1º Ano EM", "2º Ano EM", "3º Ano EM"], shifts: ["Manhã", "Tarde"], capacity: 38, gatedBy: "hasHighSchool" },
 ];
 
+const exitReasons = [
+  "Mudança de cidade",
+  "Transferência para outra escola",
+  "Questão financeira",
+  "Transporte ou distância",
+  "Adaptação pedagógica",
+  "Saúde ou família",
+  "Outro motivo",
+];
+
 const $ = (selector) => document.querySelector(selector);
 const chatLog = $("#chatLog");
 const answerForm = $("#answerForm");
@@ -64,10 +74,12 @@ function ensureDefaults() {
   state.currentQuestion ||= { type: "director" };
   state.rooms ||= [];
   state.history ||= [];
+  state.movements ||= [];
+  state.reports ||= [];
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "done"]);
+  const validQuestions = new Set(["director", "unit", "yesno", "roomCount", "roomStudents", "roomCapacity", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -76,6 +88,7 @@ function ensureDefaults() {
 
 function bindEvents() {
   answerForm.addEventListener("submit", submitAnswer);
+  answerMount.addEventListener("click", handleAnswerAction);
   $("#addRoomButton").addEventListener("click", () => {
     if (!canEditRooms()) return;
     openRoomDialog();
@@ -98,6 +111,28 @@ function bindEvents() {
       renderRooms();
     });
   });
+}
+
+function handleAnswerAction(event) {
+  const button = event.target.closest("[data-action]");
+  if (button) {
+    if (button.dataset.action === "daily-update") startDailyUpdate();
+    if (button.dataset.action === "report") generateManualReport();
+    if (button.dataset.action === "restart") restartGuide();
+    return;
+  }
+  const choice = event.target.closest(".chip[data-value]");
+  if (!choice || !answerMount.contains(choice)) return;
+  const hidden = answerMount.querySelector("input[type='hidden']");
+  if (!hidden) return;
+  if (choice.closest(".multi-answer")) {
+    choice.classList.toggle("selected");
+    hidden.value = selectedChipValues().join("|");
+    return;
+  }
+  answerMount.querySelectorAll(".chip[data-value]").forEach((item) => item.classList.remove("selected"));
+  choice.classList.add("selected");
+  hidden.value = choice.dataset.value;
 }
 
 function bindImmersiveShell() {
@@ -181,9 +216,31 @@ function renderAnswer() {
   const q = state.currentQuestion;
   sendButton.disabled = false;
   if (q.type === "done") {
-    answerMount.innerHTML = `<button class="chip selected" id="restartGuide" type="button">Revisar desde o início</button>`;
+    answerMount.innerHTML = `
+      <div class="chips action-chips">
+        <button class="chip selected" id="dailyUpdateButton" type="button" data-action="daily-update">Atualizar alunos hoje</button>
+        <button class="chip" id="reportButton" type="button" data-action="report">Gerar relatório</button>
+        <button class="chip" id="restartGuide" type="button" data-action="restart">Revisar desde o início</button>
+      </div>`;
     sendButton.disabled = true;
-    $("#restartGuide").addEventListener("click", restartGuide);
+    return;
+  }
+  if (q.type === "dailyRoom") {
+    answerMount.innerHTML = `<select required>${state.rooms.sort(sortRooms).map((room) => `<option value="${escapeAttr(room.id)}">${escapeHtml(roomLabel(room))} · ${escapeHtml(room.segment)} · ${room.students || 0}/${room.capacity || 0}</option>`).join("")}</select>`;
+    return;
+  }
+  if (q.type === "dailyType") {
+    answerMount.innerHTML = choiceButtons(["Entrada", "Saída", "Ajuste do total"]);
+    bindSingleChoice();
+    return;
+  }
+  if (q.type === "dailyQty") {
+    const label = state.updateFlow?.type === "Ajuste do total" ? "Novo total de alunos" : "Quantidade de alunos";
+    answerMount.innerHTML = `<input type="number" min="0" max="120" step="1" required placeholder="${label}" />`;
+    return;
+  }
+  if (q.type === "dailyReason") {
+    answerMount.innerHTML = `<select required>${exitReasons.map((reason) => `<option>${escapeHtml(reason)}</option>`).join("")}</select>`;
     return;
   }
   if (q.type === "director") {
@@ -246,7 +303,7 @@ function submitAnswer(event) {
   const q = state.currentQuestion;
   const value = collectValue(q);
   if (value === null || value === "") return;
-  appendUser(formatAnswer(value));
+  appendUser(formatAnswer(value, q));
   handleAnswer(q, value);
   renderAll();
   renderAnswer();
@@ -254,10 +311,10 @@ function submitAnswer(event) {
 }
 
 function collectValue(q) {
-  if (["director", "unit", "roomCount", "roomStudents", "roomCapacity"].includes(q.type)) {
+  if (["director", "unit", "roomCount", "roomStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
     return answerMount.querySelector("select,input")?.value ?? "";
   }
-  if (q.type === "yesno") return answerMount.querySelector("input")?.value || "";
+  if (q.type === "yesno" || q.type === "dailyType") return answerMount.querySelector("input")?.value || "";
   return "";
 }
 
@@ -265,6 +322,9 @@ function restartGuide() {
   state.currentQuestion = { type: "director" };
   state.rooms = [];
   state.answers = {};
+  state.movements = [];
+  state.reports = [];
+  delete state.updateFlow;
   delete state.pendingSegment;
   chatLog.innerHTML = "";
   chatLog.dataset.started = "";
@@ -274,13 +334,18 @@ function restartGuide() {
   persist();
 }
 
-function formatAnswer(value) {
+function formatAnswer(value, q = state.currentQuestion) {
+  if (q.type === "dailyRoom") {
+    const room = state.rooms.find((item) => item.id === value);
+    return room ? roomLabel(room) : value;
+  }
   return Array.isArray(value) ? value.join(", ") : value;
 }
 
 function setupDialogOptions() {
   $("#roomSegment").innerHTML = segmentPlan.map((segment) => `<option>${escapeHtml(segment.name)}</option>`).join("");
   $("#roomShift").innerHTML = ["Manhã", "Tarde", "Integral", "Noite"].map((shift) => `<option>${shift}</option>`).join("");
+  $("#roomExitReason").innerHTML = `<option value="">Selecione se houve saída</option>${exitReasons.map((reason) => `<option>${escapeHtml(reason)}</option>`).join("")}`;
 }
 
 function renderAll() {
@@ -381,6 +446,7 @@ function openRoomDialog(roomId = null) {
   $("#roomLetter").value = room.letter || "";
   $("#roomCapacity").value = room.capacity || 0;
   $("#roomStudents").value = room.students || 0;
+  $("#roomExitReason").value = "";
   roomDialog.showModal();
   lucide.createIcons();
 }
@@ -398,7 +464,23 @@ function saveRoomFromDialog() {
   };
   if (editingRoomId) {
     const index = state.rooms.findIndex((room) => room.id === editingRoomId);
-    state.rooms[index] = { ...state.rooms[index], ...payload };
+    const previous = state.rooms[index];
+    const difference = Number(payload.students || 0) - Number(previous.students || 0);
+    if (difference < 0 && !$("#roomExitReason").value) {
+      alert("Informe o motivo da saída para salvar a redução de alunos.");
+      return;
+    }
+    state.rooms[index] = { ...previous, ...payload };
+    if (difference !== 0) {
+      recordMovement(state.rooms[index], {
+        type: difference > 0 ? "Entrada" : "Saída",
+        amount: Math.abs(difference),
+        previousStudents: Number(previous.students || 0),
+        newStudents: Number(payload.students || 0),
+        reason: difference < 0 ? $("#roomExitReason").value : "",
+        source: "manual",
+      });
+    }
   } else {
     state.rooms.push({ id: crypto.randomUUID(), ...payload });
   }
@@ -516,7 +598,7 @@ async function syncToCloud(reason = "manual") {
 
 function buildCloudPayload(reason) {
   const totals = getTotals();
-  return { reason, syncedAt: new Date().toISOString(), unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", totals, rooms: state.rooms || [], history: state.history || [] };
+  return { reason, syncedAt: new Date().toISOString(), unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
 }
 
 function loadState() {
@@ -556,7 +638,208 @@ function slug(value) { return String(value).normalize("NFD").replace(/[\u0300-\u
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]); }
 function escapeAttr(value) { return escapeHtml(value).replaceAll("\n", " "); }
 
+function startDailyUpdate() {
+  if (!state.rooms.length) {
+    appendAssistant("Ainda não há salas cadastradas para atualizar.");
+    return;
+  }
+  state.updateFlow = { startedAt: new Date().toISOString() };
+  state.currentQuestion = { type: "dailyRoom" };
+  appendAssistant(`${firstName()}, qual sala teve entrada, saída ou ajuste de alunos hoje?`);
+  renderAll();
+  renderAnswer();
+  persist();
+}
+
+function selectedUpdateRoom() {
+  return state.rooms.find((room) => room.id === state.updateFlow?.roomId);
+}
+
+function applyDailyUpdate() {
+  const flow = state.updateFlow || {};
+  const room = selectedUpdateRoom();
+  if (!room) {
+    appendAssistant("Não encontrei essa sala. Vamos voltar ao painel concluído.");
+    state.currentQuestion = { type: "done" };
+    delete state.updateFlow;
+    return;
+  }
+  const previousStudents = Number(room.students || 0);
+  let newStudents = previousStudents;
+  let movementType = flow.type;
+  let amount = Math.max(0, Number(flow.amount || 0));
+
+  if (flow.type === "Entrada") newStudents = previousStudents + amount;
+  if (flow.type === "Saída") newStudents = Math.max(0, previousStudents - amount);
+  if (flow.type === "Ajuste do total") {
+    newStudents = amount;
+    movementType = newStudents >= previousStudents ? "Entrada" : "Saída";
+    amount = Math.abs(newStudents - previousStudents);
+  }
+
+  room.students = newStudents;
+  room.updatedAt = new Date().toISOString();
+  if (amount > 0) {
+    recordMovement(room, {
+      type: movementType,
+      amount,
+      previousStudents,
+      newStudents,
+      reason: movementType === "Saída" ? flow.reason || "Não informado" : "",
+      source: "chat",
+    });
+  }
+  const vacancies = Math.max(0, Number(room.capacity || 0) - Number(room.students || 0));
+  appendAssistant(`${roomLabel(room)} atualizado: ${previousStudents} aluno(s) antes, ${newStudents} agora, ${vacancies} vaga(s) disponíveis.`);
+  state.currentQuestion = { type: "done" };
+  delete state.updateFlow;
+  renderAll();
+  renderAnswer();
+  persist();
+  syncToCloud("daily-movement");
+}
+
+function recordMovement(room, details) {
+  state.movements.unshift({
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    unit: state.unit || "",
+    director: state.director || "",
+    weekId: state.weekId || currentWeek,
+    roomId: room.id || "",
+    segment: room.segment || "",
+    grade: room.grade || "",
+    shift: room.shift || "",
+    letter: room.letter || "",
+    type: details.type,
+    amount: Number(details.amount || 0),
+    previousStudents: Number(details.previousStudents || 0),
+    newStudents: Number(details.newStudents || 0),
+    reason: details.reason || "",
+    source: details.source || "chat",
+  });
+  state.movements = state.movements.slice(0, 300);
+}
+
+function generateManualReport() {
+  const report = addReportSnapshot("manual-report");
+  appendAssistant(reportCard(report));
+  renderAll();
+  renderAnswer();
+  persist();
+  syncToCloud("report-generated");
+}
+
+function addReportSnapshot(type) {
+  const report = buildReportSnapshot(type);
+  state.reports = [report, ...(state.reports || []).filter((item) => item.id !== report.id)].slice(0, 30);
+  return report;
+}
+
+function buildReportSnapshot(type) {
+  const totals = getTotals();
+  const bySegment = groupTotals(state.rooms, "segment");
+  const byShift = groupTotals(state.rooms, "shift");
+  const exits = (state.movements || []).filter((movement) => movement.type === "Saída");
+  const entries = (state.movements || []).filter((movement) => movement.type === "Entrada");
+  const exitReasons = exits.reduce((acc, movement) => {
+    const key = movement.reason || "Não informado";
+    acc[key] = (acc[key] || 0) + Number(movement.amount || 0);
+    return acc;
+  }, {});
+  const openRooms = [...state.rooms]
+    .map((room) => ({ ...room, vacancies: Math.max(0, Number(room.capacity || 0) - Number(room.students || 0)) }))
+    .sort((a, b) => b.vacancies - a.vacancies)
+    .slice(0, 8);
+  return {
+    id: crypto.randomUUID(),
+    type,
+    createdAt: new Date().toISOString(),
+    unit: state.unit || "",
+    director: state.director || "",
+    weekId: state.weekId || currentWeek,
+    totals,
+    occupancyRate: totals.capacity ? Math.round((totals.students / totals.capacity) * 100) : 0,
+    bySegment,
+    byShift,
+    movements: { entries: sumMovement(entries), exits: sumMovement(exits), exitReasons },
+    openRooms,
+  };
+}
+
+function groupTotals(rooms, key) {
+  return rooms.reduce((acc, room) => {
+    const label = room[key] || "-";
+    acc[label] ||= { rooms: 0, capacity: 0, students: 0, vacancies: 0 };
+    acc[label].rooms += 1;
+    acc[label].capacity += Number(room.capacity || 0);
+    acc[label].students += Number(room.students || 0);
+    acc[label].vacancies += Math.max(0, Number(room.capacity || 0) - Number(room.students || 0));
+    return acc;
+  }, {});
+}
+
+function sumMovement(movements) {
+  return movements.reduce((sum, movement) => sum + Number(movement.amount || 0), 0);
+}
+
+function reportCard(report) {
+  const segmentRows = Object.entries(report.bySegment).map(([segment, data]) => `<li><strong>${escapeHtml(segment)}</strong><span>${data.vacancies} vagas · ${data.students}/${data.capacity} alunos</span></li>`).join("");
+  const openRows = report.openRooms.map((room) => `<li><strong>${escapeHtml(roomLabel(room))}</strong><span>${room.vacancies} vagas</span></li>`).join("");
+  return `
+    <div class="report-card">
+      <span>Relatório gerado automaticamente</span>
+      <h3>${escapeHtml(report.unit || "Unidade")}</h3>
+      <div class="report-kpis">
+        <b>${report.totals.rooms}<small>salas</small></b>
+        <b>${report.totals.students}<small>alunos</small></b>
+        <b>${report.totals.vacancies}<small>vagas</small></b>
+        <b>${report.occupancyRate}%<small>ocupação</small></b>
+      </div>
+      <ul>${segmentRows || "<li>Sem segmentos registrados.</li>"}</ul>
+      <p>Maiores oportunidades: ${openRows ? "" : "nenhuma sala com vaga aberta no momento."}</p>
+      ${openRows ? `<ul>${openRows}</ul>` : ""}
+      <em>O relatório foi enviado para sincronização e aparecerá no painel administrativo assim que o banco receber os dados.</em>
+    </div>`;
+}
+
 function handleAnswer(q, value) {
+  if (q.type === "dailyRoom") {
+    const room = state.rooms.find((item) => item.id === value);
+    state.updateFlow = { roomId: value, startedAt: new Date().toISOString() };
+    appendAssistant(`Certo. Para ${roomLabel(room)}, você quer registrar entrada, saída ou ajuste do total?`);
+    state.currentQuestion = { type: "dailyType" };
+    return;
+  }
+  if (q.type === "dailyType") {
+    state.updateFlow.type = value;
+    const room = selectedUpdateRoom();
+    const text = value === "Ajuste do total"
+      ? `Qual é o total correto de alunos em ${roomLabel(room)} hoje?`
+      : `Quantos alunos devemos registrar como ${value.toLowerCase()} em ${roomLabel(room)}?`;
+    appendAssistant(text);
+    state.currentQuestion = { type: "dailyQty" };
+    return;
+  }
+  if (q.type === "dailyQty") {
+    const amount = Math.max(0, Number(value || 0));
+    state.updateFlow.amount = amount;
+    const room = selectedUpdateRoom();
+    const current = Number(room.students || 0);
+    const willReduce = state.updateFlow.type === "Saída" || (state.updateFlow.type === "Ajuste do total" && amount < current);
+    if (willReduce && amount > 0) {
+      appendAssistant("Para acompanharmos a evasão com clareza, qual foi o motivo da saída?");
+      state.currentQuestion = { type: "dailyReason" };
+      return;
+    }
+    applyDailyUpdate();
+    return;
+  }
+  if (q.type === "dailyReason") {
+    state.updateFlow.reason = value;
+    applyDailyUpdate();
+    return;
+  }
   if (q.type === "director") {
     state.director = value;
     const match = directorUnits.find((item) => item.director === value);
@@ -695,6 +978,8 @@ function finishGuide() {
   const totals = getTotals();
   const ending = state.answers.hasHighSchool ? "até o 3º ano do Ensino Médio" : "até o 9º ano";
   appendAssistant(`${firstName()}, mapa concluído ${ending}. Temos ${totals.rooms} sala(s), ${totals.students} aluno(s) e ${totals.vacancies} vaga(s) disponíveis agora.`);
+  const report = addReportSnapshot("final-guide");
+  appendAssistant(reportCard(report));
   state.currentQuestion = { type: "done" };
   syncToCloud("completed-guide");
 }
@@ -714,6 +999,7 @@ function calculateProgress() {
     const completed = completedBefore + state.pendingSegment.pairIndex + Math.min(0.9, (state.pendingSegment.roomIndex || 0) * 0.25);
     return Math.min(99, Math.max(28, Math.round(28 + (completed / Math.max(1, totalPairs)) * 68)));
   }
+  if (String(state.currentQuestion.type || "").startsWith("daily")) return 100;
   const base = { director: 0, unit: 9, yesno: state.currentQuestion.key === "hasHighSchool" ? 22 : 14, roomCount: 34, roomStudents: 48, roomCapacity: 58 };
   return Math.min(99, base[state.currentQuestion.type] || 10);
 }
@@ -727,6 +1013,10 @@ function missionLabel() {
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
   if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
+  if (q.type === "dailyRoom") return { title: "Atualização diária", hint: "Escolha a sala que teve movimento." };
+  if (q.type === "dailyType") return { title: "Entrada ou saída", hint: "Registre o tipo de movimentação." };
+  if (q.type === "dailyQty") return { title: "Quantidade", hint: "Informe o número de alunos movimentados." };
+  if (q.type === "dailyReason") return { title: "Motivo da saída", hint: "Esse dado orienta ações contra evasão." };
   return { title: "Mapa concluído", hint: "Os dados podem ser sincronizados." };
 }
 

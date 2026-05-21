@@ -2,7 +2,8 @@ const apiUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const tokenKey = "aps-admin-token";
 
 const $ = (selector) => document.querySelector(selector);
-let dashboardData = { units: [], rooms: [], users: [] };
+let dashboardData = { units: [], rooms: [], users: [], reports: [], movements: [] };
+let refreshTimer = null;
 
 initAdmin();
 
@@ -35,6 +36,8 @@ function showDashboard() {
   $("#loginView").hidden = true;
   $("#dashboardView").hidden = false;
   loadDashboard();
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadDashboard, 30000);
 }
 
 async function loadDashboard() {
@@ -75,6 +78,8 @@ function renderDashboard() {
   const units = dashboardData.units || [];
   const rooms = dashboardData.rooms || [];
   const users = dashboardData.users || [];
+  const reports = dashboardData.reports || [];
+  const movements = dashboardData.movements || [];
   const totals = units.reduce((acc, unit) => {
     acc.units += 1;
     acc.rooms += Number(unit.totalRooms || 0);
@@ -83,12 +88,23 @@ function renderDashboard() {
     acc.vacancies += Number(unit.vacancies || 0);
     return acc;
   }, { units: 0, rooms: 0, capacity: 0, students: 0, vacancies: 0 });
+  const movementTotals = movements.reduce((acc, movement) => {
+    if (movement.type === "Entrada") acc.entries += Number(movement.amount || 0);
+    if (movement.type === "Saída") {
+      acc.exits += Number(movement.amount || 0);
+      const reason = movement.reason || "Não informado";
+      acc.reasons[reason] = (acc.reasons[reason] || 0) + Number(movement.amount || 0);
+    }
+    return acc;
+  }, { entries: 0, exits: 0, reasons: {} });
 
   $("#totalUnits").textContent = totals.units;
   $("#totalRooms").textContent = totals.rooms;
   $("#totalCapacity").textContent = totals.capacity;
   $("#totalStudents").textContent = totals.students;
   $("#totalVacancies").textContent = totals.vacancies;
+  $("#totalEntries").textContent = movementTotals.entries;
+  $("#totalExits").textContent = movementTotals.exits;
 
   const query = $("#unitSearch").value.trim().toLowerCase();
   const filteredUnits = units.filter((unit) => `${unit.unit} ${unit.director}`.toLowerCase().includes(query));
@@ -119,6 +135,22 @@ function renderDashboard() {
   $("#usersList").innerHTML = users.length
     ? users.map((user) => `<div class="user-pill"><strong>${escapeHtml(user.name || user.email || "-")}</strong><span>${escapeHtml(user.email || "")}</span><span>${escapeHtml(user.unit || "")} · <b class="status-ok">${escapeHtml(user.status || "Pendente")}</b></span></div>`).join("")
     : `<div class="empty-state">Nenhum usuário cadastrado ainda.</div>`;
+
+  $("#reasonList").innerHTML = Object.keys(movementTotals.reasons).length
+    ? Object.entries(movementTotals.reasons).sort((a, b) => b[1] - a[1]).map(([reason, total]) => `<div class="reason-item"><strong>${escapeHtml(reason)}</strong><span>${escapeHtml(total)} saída(s)</span></div>`).join("")
+    : `<div class="empty-state">Sem saídas registradas até agora.</div>`;
+
+  $("#reportsTable").innerHTML = table([
+    ["Unidade", "Diretor", "Criado em", "Vagas", "Ocupação", "Drive"],
+    ...reports.slice(0, 120).map((report) => [
+      escapeHtml(report.unit || "-"),
+      escapeHtml(report.director || "-"),
+      escapeHtml(formatDateTime(report.createdAt)),
+      `<strong>${escapeHtml(report.vacancies || 0)}</strong>`,
+      escapeHtml(`${report.occupancyRate || 0}%`),
+      report.docUrl ? `<a href="${escapeAttr(report.docUrl)}" target="_blank" rel="noopener">Abrir</a>` : `<span>Aguardando Drive</span>`,
+    ]),
+  ]);
 }
 
 function table(rows) {
@@ -166,6 +198,15 @@ function setLoginStatus(text) {
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replaceAll("\n", " ");
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  try { return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)); } catch { return String(value); }
 }
 
 function initBrain() {

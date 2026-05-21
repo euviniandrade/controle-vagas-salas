@@ -148,7 +148,7 @@ a { color: inherit; text-decoration: none; }
 
 .signal-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 12px;
 }
 .signal-grid article { min-height: 122px; padding: 18px; position: relative; overflow: hidden; }
@@ -162,6 +162,7 @@ a { color: inherit; text-decoration: none; }
 .signal-grid span { display: block; color: var(--muted); font-weight: 850; }
 .signal-grid strong { display: block; margin-top: 12px; font-size: clamp(2rem, 4vw, 3.4rem); line-height: .9; }
 .signal-grid .hot { background: linear-gradient(135deg, rgba(255,212,71,.22), rgba(25,241,255,.08)); }
+.signal-grid .risk { background: linear-gradient(135deg, rgba(255,95,146,.2), rgba(255,255,255,.05)); }
 
 .workbench {
   display: grid;
@@ -211,9 +212,22 @@ a { color: inherit; text-decoration: none; }
 .data-row strong { color: #fff; }
 .data-row small { display: block; color: var(--muted); }
 .data-table.compact .data-row { grid-template-columns: .9fr .95fr .9fr .62fr .62fr .62fr; }
+.data-table.reports .data-row { grid-template-columns: .85fr .85fr .8fr .5fr .55fr .62fr; }
+.data-table a { color: var(--cyan); font-weight: 950; }
 
 .access-form { display: grid; gap: 9px; margin-bottom: 14px; }
 .users-list { display: grid; gap: 9px; max-height: 360px; overflow: auto; }
+.reason-list { display: grid; gap: 9px; max-height: 360px; overflow: auto; }
+.reason-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,.06);
+}
+.reason-item span { color: var(--pink); font-weight: 900; }
 .user-pill {
   display: grid;
   gap: 4px;
@@ -233,7 +247,7 @@ a { color: inherit; text-decoration: none; }
   .signal-grid { grid-template-columns: repeat(2, 1fr); }
   .panel-head { display: grid; }
   .panel-head input { max-width: none; }
-  .data-row, .data-table.compact .data-row { grid-template-columns: 1fr; }
+  .data-row, .data-table.compact .data-row, .data-table.reports .data-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 620px) {

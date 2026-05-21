@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Controle de Vagas APS</title>
-    <link rel="stylesheet" href="./admin.css?v=20260520-admin" />
-    <script src="./config.js?v=20260520-admin"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260521-reports" />
+    <script src="./config.js?v=20260521-reports"></script>
   </head>
   <body>
     <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
@@ -47,6 +47,8 @@
           <article><span>Capacidade</span><strong id="totalCapacity">0</strong></article>
           <article><span>Alunos</span><strong id="totalStudents">0</strong></article>
           <article class="hot"><span>Vagas</span><strong id="totalVacancies">0</strong></article>
+          <article><span>Entradas</span><strong id="totalEntries">0</strong></article>
+          <article class="risk"><span>Saídas</span><strong id="totalExits">0</strong></article>
         </section>
 
         <section class="workbench">
@@ -77,6 +79,26 @@
             <div id="usersList" class="users-list"></div>
           </article>
 
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <span>Evasão</span>
+                <h2>Motivos de saída</h2>
+              </div>
+            </div>
+            <div id="reasonList" class="reason-list"></div>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-head">
+              <div>
+                <span>Relatórios</span>
+                <h2>Relatórios salvos no Drive</h2>
+              </div>
+            </div>
+            <div id="reportsTable" class="data-table reports"></div>
+          </article>
+
           <article class="panel wide">
             <div class="panel-head">
               <div>
@@ -89,6 +111,6 @@
         </section>
       </section>
     </main>
-    <script type="module" src="./admin.js?v=20260520-admin"></script>
+    <script type="module" src="./admin.js?v=20260521-reports"></script>
   </body>
 </html>
