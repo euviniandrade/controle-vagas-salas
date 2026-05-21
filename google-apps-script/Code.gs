@@ -2,6 +2,7 @@ const DEFAULT_SPREADSHEET_ID = "1uEWisJkkBssaPGmVqImE9vx-_fSitPuD91c8wup9L1Y";
 
 const ADMIN_EMAIL = "engenhariatotal.vinicius@gmail.com";
 const ADMIN_PASSWORD = "APS@2026";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 const HEADERS = {
   Unidades: ["Atualizado em", "Unidade", "Diretor", "Semana", "Tem Ensino Medio", "Total de salas", "Capacidade total", "Alunos atuais", "Vagas disponiveis", "Payload JSON"],
@@ -33,10 +34,51 @@ function routeApi(params) {
     if (action === "adminLogin") return adminLogin(params);
     if (action === "adminDashboard") return adminDashboard(params);
     if (action === "requestAccess") return requestAccess(params);
+    if (action === "aiCoach") return aiCoach(params);
     return { ok: false, error: "Acao nao reconhecida." };
   } catch (error) {
     return { ok: false, error: String(error && error.message ? error.message : error) };
   }
+}
+
+function aiCoach(params) {
+  const baseText = String(params.message || "").trim();
+  if (!baseText || baseText.length > 800) return { ok: false, error: "Mensagem invalida." };
+  const key = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
+  if (!key) return { ok: false, error: "Gemini nao configurado." };
+
+  const prompt = [
+    "Reescreva a mensagem abaixo para um diretor escolar brasileiro.",
+    "Mantenha exatamente a mesma intenção, os mesmos nomes de turma, turno, unidade e números.",
+    "Não invente dados, não acrescente perguntas extras e não mude a regra do formulário.",
+    "Use português do Brasil, tom institucional, claro, acolhedor e objetivo.",
+    "Responda apenas com a mensagem final, sem aspas e sem markdown.",
+    "",
+    "Contexto:",
+    "Etapa: " + String(params.step || ""),
+    "Diretor: " + String(params.director || ""),
+    "Unidade: " + String(params.unit || ""),
+    "",
+    "Mensagem:",
+    baseText,
+  ].join("\n");
+
+  const response = UrlFetchApp.fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent", {
+    method: "post",
+    contentType: "application/json",
+    headers: { "x-goog-api-key": key },
+    muteHttpExceptions: true,
+    payload: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.35, maxOutputTokens: 160 },
+    }),
+  });
+  const code = response.getResponseCode();
+  const body = JSON.parse(response.getContentText() || "{}");
+  if (code < 200 || code >= 300) return { ok: false, error: body.error && body.error.message || "Falha no Gemini." };
+  const text = body.candidates && body.candidates[0] && body.candidates[0].content && body.candidates[0].content.parts && body.candidates[0].content.parts[0] && body.candidates[0].content.parts[0].text;
+  if (!text) return { ok: false, error: "Gemini sem resposta." };
+  return { ok: true, text: String(text).trim().slice(0, 700) };
 }
 
 function adminLogin(params) {

@@ -269,7 +269,11 @@ function renderAnswer() {
     return;
   }
   if (q.type === "director") {
-    answerMount.innerHTML = `<select required>${directorUnits.map((item) => `<option value="${escapeAttr(item.director)}">${escapeHtml(item.director)}</option>`).join("")}</select>`;
+    answerMount.innerHTML = `
+      <input type="text" required list="directorSuggestions" autocomplete="name" placeholder="Seu nome" />
+      <datalist id="directorSuggestions">
+        ${directorUnits.map((item) => `<option value="${escapeAttr(item.director)}"></option>`).join("")}
+      </datalist>`;
     return;
   }
   if (q.type === "unit") {
@@ -584,7 +588,10 @@ function importJson(event) {
   event.target.value = "";
 }
 
-function appendAssistant(html) { appendMessage("assistant", html); }
+function appendAssistant(html) {
+  const message = appendMessage("assistant", html);
+  maybePolishAssistantMessage(message, html);
+}
 function appendUser(text) { appendMessage("user", escapeHtml(text)); }
 function appendMessage(role, html) {
   const message = document.createElement("div");
@@ -592,6 +599,54 @@ function appendMessage(role, html) {
   message.innerHTML = `<div class="bubble">${html}</div>`;
   chatLog.appendChild(message);
   chatLog.scrollTop = chatLog.scrollHeight;
+  return message;
+}
+
+function maybePolishAssistantMessage(message, html) {
+  const text = String(html || "").trim();
+  if (!googleReady() || !text || text.includes("<") || text.length > 700) return;
+  const bubble = message.querySelector(".bubble");
+  if (!bubble) return;
+  requestAiCoach(text)
+    .then((result) => {
+      if (!result?.ok || !result.text) return;
+      bubble.textContent = result.text;
+      chatLog.scrollTop = chatLog.scrollHeight;
+    })
+    .catch(() => {});
+}
+
+function requestAiCoach(message) {
+  return jsonpApi({
+    action: "aiCoach",
+    message,
+    step: state.currentQuestion?.type || "",
+    director: state.director || "",
+    unit: state.unit || "",
+  }, 4200);
+}
+
+function jsonpApi(params, timeout = 9000) {
+  if (!googleReady()) return Promise.resolve({ ok: false });
+  return new Promise((resolve, reject) => {
+    const callback = `apsCoach_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const url = new URL(googleScriptUrl);
+    url.searchParams.set("api", "1");
+    url.searchParams.set("callback", callback);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
+    const script = document.createElement("script");
+    const timer = setTimeout(() => cleanup(() => reject(new Error("Tempo esgotado."))), timeout);
+    window[callback] = (payload) => cleanup(() => resolve(payload));
+    script.onerror = () => cleanup(() => reject(new Error("Falha na IA.")));
+    function cleanup(done) {
+      clearTimeout(timer);
+      delete window[callback];
+      script.remove();
+      done();
+    }
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
 }
 
 function persist() {
@@ -949,10 +1004,11 @@ function handleAnswer(q, value) {
     return;
   }
   if (q.type === "director") {
-    state.director = value;
-    const match = directorUnits.find((item) => item.director === value);
+    const directorName = String(value || "").trim();
+    const match = directorUnits.find((item) => normalizeName(item.director) === normalizeName(directorName));
+    state.director = match ? match.director : directorName;
     if (match) state.unit = match.unit;
-    appendAssistant(`${value}, combinado. Eu vou conduzir tudo turma por turma e deixar o saldo de vagas pronto no final. Confirme a unidade.`);
+    appendAssistant(`${state.director}, combinado. Eu vou conduzir tudo turma por turma e deixar o saldo de vagas pronto no final. Confirme a unidade.`);
     state.currentQuestion = { type: "unit" };
     return;
   }
@@ -1138,6 +1194,14 @@ function segmentIntro(segment) {
 
 function firstName() {
   return state.director ? state.director.split(" ")[0] : "Diretor";
+}
+
+function normalizeName(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
 function shiftText(shift) {
