@@ -26,6 +26,7 @@ const saveStatus = $("#saveStatus");
 const sendButton = $("#sendButton");
 const roomsList = $("#roomsList");
 const controlPanel = $(".control-panel");
+const layout = $(".layout");
 const missionTitle = $("#missionTitle");
 const missionHint = $("#missionHint");
 const progressText = $("#progressText");
@@ -283,6 +284,7 @@ function renderAll() {
   renderMissionDeck();
   $("#weekLabel").textContent = state.weekId || currentWeek;
   controlPanel.classList.toggle("is-empty", !state.rooms.length);
+  layout?.classList.toggle("has-results", Boolean(state.rooms.length));
   lucide.createIcons();
 }
 
