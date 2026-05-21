@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v6";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5"];
+﻿const storageKey = "aps-controle-vagas-v7";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -621,6 +621,7 @@ function compactChatForNextPrompt(html) {
   let hidden = 0;
   messages.forEach((message) => {
     if (message === lastUser) return;
+    if (message.querySelector(".unit-map-card")) return;
     if (!message.classList.contains("is-archived")) hidden += 1;
     message.classList.add("is-archived");
   });
@@ -977,7 +978,7 @@ function currentQuestionPrompt() {
   if (q.type === "unit") return `${firstName()}, confirme a unidade para continuarmos.`;
   if (q.type === "yesno" && q.key === "hasContraturno") return `${firstName()}, a unidade oferece contraturno?`;
   if (q.type === "yesno" && q.key === "hasHighSchool") return "A unidade possui Ensino Médio?";
-  if (q.type === "blueprintConfirm") return blueprintSummaryText(getCurrentBlueprint());
+  if (q.type === "blueprintConfirm") return "Este mapa geral está correto para começarmos a confirmar alunos e capacidade, sala por sala?";
   if (q.type === "roomCount" && state.pendingSegment) return `${firstName()}, ${currentRoomCountText()}`;
   if (q.type === "roomStudents" && (state.pendingSegment || state.prefillFlow)) return `Agora ${roomLabel(currentPendingRoom())}: quantos alunos essa turma tem hoje?`;
   if (q.type === "roomCapacity" && (state.pendingSegment || state.prefillFlow)) return `E qual é a capacidade máxima da sala ${roomLabel(currentPendingRoom())}?`;
@@ -1045,7 +1046,9 @@ function handleAnswer(q, value) {
     state.unit = value;
     state.weeklyDate = new Date().toISOString().slice(0, 10);
     state.weekId = currentWeek;
-    appendAssistant(`${firstName()}, antes das turmas: a unidade oferece contraturno?`);
+    const blueprint = getCurrentBlueprint();
+    if (blueprint) appendAssistant(unitOverviewCard(blueprint));
+    appendAssistant(`${firstName()}, antes de avançar para as salas, confirme se a unidade oferece contraturno.`);
     state.currentQuestion = { type: "yesno", key: "hasContraturno" };
     return;
   }
@@ -1131,11 +1134,81 @@ function getCurrentBlueprint() {
 }
 
 function blueprintSummaryText(blueprint) {
-  const highSchool = blueprint.hasHighSchool ? "com Ensino Médio" : "sem Ensino Médio";
-  const notes = blueprint.notes?.length ? ` Observações importadas: ${blueprint.notes.slice(0, 3).join("; ")}.` : "";
-  const mixed = mixedGroupsText(blueprint);
-  const mixedText = mixed ? ` Atenção: identifiquei turma(s) multisseriada(s): ${mixed}.` : "";
-  return `${firstName()}, encontrei a estrutura prevista da unidade ${blueprint.unit}: ${blueprint.totalRooms} turma(s), ${highSchool}. Posso usar essa base e pedir apenas alunos atuais e capacidade de cada sala?${mixedText}${notes}`;
+  if (!blueprint) return "Não encontrei uma estrutura importada para esta unidade. Vamos montar manualmente.";
+  return `${firstName()}, vou usar este mapa importado da planilha como ponto de partida. Você só confirma a estrutura e informa alunos atuais e capacidade máxima de cada sala.`;
+}
+
+function unitOverviewCard(blueprint) {
+  const segmentRows = blueprintSegmentSummary(blueprint);
+  const shifts = blueprintShiftSummary(blueprint);
+  const mixed = blueprint.mixedGroups || [];
+  const details = directorUnits.find((item) => item.unit === blueprint.unit);
+  const mixedList = mixed.length
+    ? mixed.map((group) => {
+        const grades = (group.grades || []).map(displayGrade).join(" + ");
+        const shiftsText = (group.shifts || []).map(displayShift).join(" e ");
+        return `<li><strong>${escapeHtml(grades)}</strong><span>${escapeHtml(shiftsText || "Turno informado na planilha")}</span></li>`;
+      }).join("")
+    : `<li><strong>Nenhuma turma mista identificada</strong><span>pela planilha atual</span></li>`;
+  const segmentCards = segmentRows.map((row) => `
+    <b>
+      <span>${escapeHtml(row.label)}</span>
+      ${row.total}
+      <small>${escapeHtml(row.detail)}</small>
+    </b>`).join("");
+  return `
+    <div class="unit-map-card">
+      <span>Mapa geral da unidade</span>
+      <h3>${escapeHtml(blueprint.unit)}</h3>
+      <p>Olá, ${escapeHtml(firstName())}. Pela base importada, esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
+      <div class="unit-map-kpis">
+        ${segmentCards}
+      </div>
+      <div class="unit-map-split">
+        <section>
+          <em>Turnos previstos</em>
+          <div class="unit-map-badges">
+            ${shifts.map((item) => `<i>${escapeHtml(item.shift)}: ${item.total}</i>`).join("")}
+          </div>
+        </section>
+        <section>
+          <em>Turmas multisseriadas/mistas</em>
+          <ul>${mixedList}</ul>
+        </section>
+      </div>
+      <p class="unit-map-note">Agora eu vou apenas confirmar o que for necessário e seguir sala por sala para alunos atuais, capacidade máxima e vagas disponíveis.</p>
+    </div>`;
+}
+
+function blueprintSegmentSummary(blueprint) {
+  const labels = ["Educação Infantil", "Fundamental 1", "Fundamental 2", "Ensino Médio"];
+  const totals = Object.fromEntries(labels.map((label) => [label, { total: 0, shifts: new Map() }]));
+  (blueprint?.grades || []).forEach((gradePlan) => {
+    const segment = displaySegment(gradePlan.segment);
+    if (!totals[segment]) totals[segment] = { total: 0, shifts: new Map() };
+    Object.entries(gradePlan.shifts || {}).forEach(([shift, count]) => {
+      const amount = Number(count || 0);
+      const label = displayShift(shift);
+      totals[segment].total += amount;
+      totals[segment].shifts.set(label, (totals[segment].shifts.get(label) || 0) + amount);
+    });
+  });
+  return labels.map((label) => {
+    const data = totals[label] || { total: 0, shifts: new Map() };
+    const detail = Array.from(data.shifts.entries()).map(([shift, total]) => `${shift}: ${total}`).join(" · ") || "não previsto";
+    return { label, total: data.total, detail };
+  });
+}
+
+function blueprintShiftSummary(blueprint) {
+  const shifts = new Map();
+  (blueprint?.grades || []).forEach((gradePlan) => {
+    Object.entries(gradePlan.shifts || {}).forEach(([shift, count]) => {
+      const label = displayShift(shift);
+      shifts.set(label, (shifts.get(label) || 0) + Number(count || 0));
+    });
+  });
+  return Array.from(shifts.entries()).map(([shift, total]) => ({ shift, total }));
 }
 
 function startBlueprintCollection() {

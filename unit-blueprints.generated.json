@@ -128,8 +128,8 @@
     "notes": [],
     "mixedGroups": []
   },
-  "CACLI": {
-    "unit": "CACLI",
+  "CACLI I": {
+    "unit": "CACLI I",
     "totalRooms": 59,
     "hasHighSchool": true,
     "grades": [
@@ -396,8 +396,8 @@
           "Pre I"
         ],
         "shifts": [
-          "Manha",
-          "Tarde"
+          "Tarde",
+          "Manha"
         ],
         "note": "Multisseriada"
       }
@@ -797,13 +797,13 @@
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada",
+        "note": "Materna 1 e pré I da manhã é multisseriada",
         "mixedWithByShift": {
           "Manha": {
             "with": [
               "Pre I"
             ],
-            "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+            "note": "Materna 1 e pré I da manhã é multisseriada"
           }
         }
       },
@@ -812,14 +812,6 @@
         "segment": "Educacao Infantil",
         "shifts": {
           "Tarde": 2
-        },
-        "mixedWithByShift": {
-          "Manha": {
-            "with": [
-              "Maternal"
-            ],
-            "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
-          }
         }
       },
       {
@@ -925,7 +917,7 @@
       }
     ],
     "notes": [
-      "Maternal: Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+      "Maternal: Materna 1 e pré I da manhã é multisseriada"
     ],
     "mixedGroups": [
       {
@@ -936,7 +928,7 @@
         "shifts": [
           "Manha"
         ],
-        "note": "Materna 1 e pr\u00e9 I da manh\u00e3 \u00e9 multisseriada"
+        "note": "Materna 1 e pré I da manhã é multisseriada"
       }
     ]
   },
@@ -1447,13 +1439,13 @@
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "Turma da manh\u00e3 multisseriada",
+        "note": "Turma da manhã multisseriada",
         "mixedWithByShift": {
           "Manha": {
             "with": [
               "Pre I"
             ],
-            "note": "Turma da manh\u00e3 multisseriada"
+            "note": "Turma da manhã multisseriada"
           }
         }
       },
@@ -1463,15 +1455,7 @@
         "shifts": {
           "Tarde": 1
         },
-        "note": "turma da manh\u00e3 multisseriada",
-        "mixedWithByShift": {
-          "Manha": {
-            "with": [
-              "Maternal"
-            ],
-            "note": "Turma da manh\u00e3 multisseriada"
-          }
-        }
+        "note": "turma da manhã multisseriada"
       },
       {
         "grade": "Pre II",
@@ -1555,8 +1539,8 @@
       }
     ],
     "notes": [
-      "Maternal: Turma da manh\u00e3 multisseriada",
-      "Pre I: turma da manh\u00e3 multisseriada"
+      "Maternal: Turma da manhã multisseriada",
+      "Pre I: turma da manhã multisseriada"
     ],
     "mixedGroups": [
       {
@@ -1567,7 +1551,7 @@
         "shifts": [
           "Manha"
         ],
-        "note": "Turma da manh\u00e3 multisseriada"
+        "note": "Turma da manhã multisseriada"
       }
     ]
   },
@@ -1687,21 +1671,7 @@
           "Manha": 1,
           "Tarde": 1
         },
-        "note": "multisseriada",
-        "mixedWithByShift": {
-          "Manha": {
-            "with": [
-              "Maternal"
-            ],
-            "note": "multisseriada"
-          },
-          "Tarde": {
-            "with": [
-              "Maternal"
-            ],
-            "note": "multisseriada"
-          }
-        }
+        "note": "multisseriada"
       },
       {
         "grade": "Pre II",
@@ -1787,18 +1757,6 @@
     "notes": [
       "Pre I: multisseriada"
     ],
-    "mixedGroups": [
-      {
-        "grades": [
-          "Pre I",
-          "Maternal"
-        ],
-        "shifts": [
-          "Manha",
-          "Tarde"
-        ],
-        "note": "multisseriada"
-      }
-    ]
+    "mixedGroups": []
   }
 }
