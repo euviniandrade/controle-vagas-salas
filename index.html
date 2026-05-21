@@ -4,26 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle de Vagas por Sala - APS</title>
-    <link rel="stylesheet" href="./styles.css?v=20260520-adminflow" />
-    <script src="./config.js?v=20260520-adminflow"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260521-noomo-scan" />
+    <script src="./config.js?v=20260521-noomo-scan"></script>
   </head>
   <body>
+    <section id="launchIntro" class="launch-intro" aria-label="Inicio da experiencia">
+      <canvas id="launchCanvas" aria-hidden="true"></canvas>
+      <div class="launch-panel">
+        <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
+        <p class="eyebrow">Controle de Vagas APS</p>
+        <h1>Ativar radar neural</h1>
+        <p>Uma experiencia guiada, visual e objetiva para mapear cada sala e encontrar as vagas disponiveis para a campanha.</p>
+        <button id="startExperience" type="button">Iniciar experiencia</button>
+      </div>
+    </section>
+
     <div class="ambient" aria-hidden="true">
       <span class="pulse p1"></span>
       <span class="pulse p2"></span>
       <span class="pulse p3"></span>
       <span class="scanline"></span>
+      <span class="noise-layer"></span>
     </div>
+
     <div class="app">
       <header class="topbar">
         <a class="brand" href="./index.html" aria-label="Controle de vagas APS">
           <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
           <span>
-            <strong>Controle de Vagas</strong>
-            <small>Campanha de matrículas</small>
+            <strong>APS Neural Seats</strong>
+            <small>Mapa inteligente de matriculas</small>
           </span>
         </a>
-        <nav class="top-actions" aria-label="Ações do sistema">
+        <div class="live-strip" aria-hidden="true">
+          <span>AI</span><span>Vagas</span><span>Salas</span><span>2026</span>
+        </div>
+        <nav class="top-actions" aria-label="Acoes do sistema">
           <button id="syncCloudButton" class="icon-btn ghost" type="button" title="Sincronizar com banco online" aria-label="Sincronizar com banco online"><i data-lucide="cloud-upload"></i></button>
           <button id="newWeekButton" class="icon-btn ghost" type="button" title="Registrar nova semana" aria-label="Registrar nova semana"><i data-lucide="calendar-plus"></i></button>
           <button id="exportCsvButton" class="icon-btn ghost" type="button" title="Exportar CSV" aria-label="Exportar CSV"><i data-lucide="file-spreadsheet"></i></button>
@@ -36,23 +52,29 @@
       </header>
 
       <main class="layout">
-        <section class="conversation" aria-label="Formulário conversacional">
+        <section class="conversation" aria-label="Formulario conversacional">
           <div class="chat-head">
             <canvas id="brainScene" class="brain-scene" aria-hidden="true"></canvas>
             <div class="data-rain" aria-hidden="true"></div>
-            <div>
-              <p class="eyebrow">Sala por sala, sem planilha fria</p>
-              <h1>Central viva de vagas</h1>
-              <p class="hero-subtitle">Um roteiro interativo para mapear turmas, capacidade e alunos atuais com clareza de campanha.</p>
+            <div class="orbital-hud" aria-hidden="true">
+              <span>Capacidade</span>
+              <span>Alunos</span>
+              <span>Vagas</span>
+              <span>Turnos</span>
+            </div>
+            <div class="hero-copy">
+              <p class="eyebrow">Experiencia guiada para diretores</p>
+              <h1>Radar neural de vagas</h1>
+              <p class="hero-subtitle">Uma jornada interativa que transforma respostas simples em visao de campanha: salas, alunos, capacidade e vagas em tempo real.</p>
             </div>
             <span id="saveStatus" class="save-status">Pronto</span>
           </div>
 
           <div class="mission-deck" aria-label="Progresso do preenchimento">
             <article class="mission-card current">
-              <span>Missão atual</span>
+              <span>Missao atual</span>
               <strong id="missionTitle">Identificar unidade</strong>
-              <em id="missionHint">Comece pelo diretor responsável.</em>
+              <em id="missionHint">Comece pelo diretor responsavel.</em>
             </article>
             <article class="mission-card">
               <span>Ritmo</span>
@@ -85,7 +107,7 @@
         <aside class="control-panel is-empty" aria-label="Salas cadastradas">
           <section class="unit-card">
             <div class="unit-main">
-              <span id="unitBadge" class="badge">Unidade não iniciada</span>
+              <span id="unitBadge" class="badge">Unidade nao iniciada</span>
               <h2 id="unitTitle">Comece pela unidade</h2>
               <p id="unitSubtitle">O assistente vai perguntar por diretor, segmentos, turnos e salas.</p>
             </div>
@@ -116,7 +138,7 @@
             <button class="segment-tab" type="button" data-segment-filter="Contraturno">Contraturno</button>
             <button class="segment-tab" type="button" data-segment-filter="Fundamental 1">Fund. 1</button>
             <button class="segment-tab" type="button" data-segment-filter="Fundamental 2">Fund. 2</button>
-            <button class="segment-tab" type="button" data-segment-filter="Ensino Médio">Médio</button>
+            <button class="segment-tab" type="button" data-segment-filter="Ensino Médio">Medio</button>
           </section>
 
           <section class="room-tools">
@@ -151,8 +173,8 @@
           <label>Segmento
             <select id="roomSegment" required></select>
           </label>
-          <label>Série/turma
-            <input id="roomGrade" type="text" required placeholder="Ex.: 1º Ano" />
+          <label>Serie/turma
+            <input id="roomGrade" type="text" required placeholder="Ex.: 1 Ano" />
           </label>
           <label>Turno
             <select id="roomShift" required></select>
@@ -160,7 +182,7 @@
           <label>Letra
             <input id="roomLetter" type="text" maxlength="3" placeholder="A" />
           </label>
-          <label>Capacidade máxima
+          <label>Capacidade maxima
             <input id="roomCapacity" type="number" min="0" step="1" required />
           </label>
           <label>Alunos atuais
@@ -176,6 +198,6 @@
     </dialog>
 
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./app.js?v=20260520-adminflow"></script>
+    <script type="module" src="./app.js?v=20260521-noomo-scan"></script>
   </body>
 </html>

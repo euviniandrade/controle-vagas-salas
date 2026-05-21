@@ -46,6 +46,7 @@ function init() {
   ensureDefaults();
   setupDialogOptions();
   bindEvents();
+  bindImmersiveShell();
   initBrainScene();
   renderAll();
   if (!chatLog.dataset.started) {
@@ -85,6 +86,83 @@ function bindEvents() {
       renderRooms();
     });
   });
+}
+
+function bindImmersiveShell() {
+  const launch = $("#launchIntro");
+  const start = $("#startExperience");
+  if (launch && start) {
+    start.addEventListener("click", () => {
+      launch.classList.add("dismissed");
+      setTimeout(() => launch.remove(), 720);
+    });
+  }
+  window.addEventListener("pointermove", (event) => {
+    const x = Math.round((event.clientX / Math.max(1, window.innerWidth)) * 100);
+    const y = Math.round((event.clientY / Math.max(1, window.innerHeight)) * 100);
+    document.documentElement.style.setProperty("--mx", `${x}%`);
+    document.documentElement.style.setProperty("--my", `${y}%`);
+  }, { passive: true });
+  initLaunchCanvas();
+}
+
+function initLaunchCanvas() {
+  const canvas = $("#launchCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const nodes = Array.from({ length: 120 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    vx: (Math.random() - 0.5) * 0.00028,
+    vy: (Math.random() - 0.5) * 0.00028,
+    r: 1.3 + Math.random() * 2.8,
+  }));
+  function resize() {
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * scale);
+    canvas.height = Math.floor(window.innerHeight * scale);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
+  function draw(time) {
+    if (!canvas.isConnected) return;
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    nodes.forEach((node) => {
+      node.x = (node.x + node.vx + 1) % 1;
+      node.y = (node.y + node.vy + 1) % 1;
+    });
+    const glow = ctx.createRadialGradient(window.innerWidth * 0.5, window.innerHeight * 0.48, 30, window.innerWidth * 0.5, window.innerHeight * 0.48, window.innerWidth * 0.72);
+    glow.addColorStop(0, "rgba(25,241,255,.24)");
+    glow.addColorStop(0.46, "rgba(255,212,71,.13)");
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    for (let i = 0; i < nodes.length; i += 1) {
+      for (let j = i + 1; j < nodes.length; j += 1) {
+        const ax = nodes[i].x * window.innerWidth;
+        const ay = nodes[i].y * window.innerHeight;
+        const bx = nodes[j].x * window.innerWidth;
+        const by = nodes[j].y * window.innerHeight;
+        const distance = Math.hypot(ax - bx, ay - by);
+        if (distance < 120) {
+          ctx.strokeStyle = `rgba(25,241,255,${(1 - distance / 120) * 0.18})`;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+      }
+    }
+    nodes.forEach((node, index) => {
+      ctx.fillStyle = index % 9 === 0 ? "rgba(255,212,71,.95)" : "rgba(25,241,255,.78)";
+      ctx.beginPath();
+      ctx.arc(node.x * window.innerWidth, node.y * window.innerHeight, node.r + Math.sin(time * 0.002 + index), 0, Math.PI * 2);
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  requestAnimationFrame(draw);
 }
 
 function renderAnswer() {
