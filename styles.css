@@ -599,6 +599,7 @@ h1 {
 }
 .segment-tab.active { color: #06101f; background: linear-gradient(90deg, var(--aqua), var(--gold)); }
 .room-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 8px; }
+.control-panel.guide-active .room-tools { display: none; }
 .primary-action, .soft-action, .danger-action {
   min-height: 44px;
   display: inline-flex;
@@ -639,6 +640,7 @@ h1 {
   animation: rise .22s ease both;
 }
 .room-item button { text-align: left; border: 0; background: transparent; padding: 0; color: inherit; }
+.room-item button:disabled { cursor: default; opacity: 1; }
 .room-name { display: block; font-weight: 950; }
 .room-meta { display: block; margin-top: 3px; color: var(--muted); font-size: .82rem; }
 .room-vacancy {

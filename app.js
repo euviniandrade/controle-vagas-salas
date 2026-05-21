@@ -76,8 +76,14 @@ function ensureDefaults() {
 
 function bindEvents() {
   answerForm.addEventListener("submit", submitAnswer);
-  $("#addRoomButton").addEventListener("click", () => openRoomDialog());
-  $("#clearRoomsButton").addEventListener("click", clearRooms);
+  $("#addRoomButton").addEventListener("click", () => {
+    if (!canEditRooms()) return;
+    openRoomDialog();
+  });
+  $("#clearRoomsButton").addEventListener("click", () => {
+    if (!canEditRooms()) return;
+    clearRooms();
+  });
   $("#newWeekButton").addEventListener("click", createWeeklySnapshot);
   $("#syncCloudButton").addEventListener("click", () => syncToCloud("manual"));
   $("#exportCsvButton").addEventListener("click", exportCsv);
@@ -278,12 +284,16 @@ function setupDialogOptions() {
 }
 
 function renderAll() {
+  const editable = canEditRooms();
   renderUnit();
   renderMetrics();
   renderRooms();
   renderMissionDeck();
   $("#weekLabel").textContent = state.weekId || currentWeek;
+  $("#roomsHint").textContent = editable ? "Revise as turmas mapeadas antes do envio final." : "Prévia automática: continue respondendo pelo chat.";
   controlPanel.classList.toggle("is-empty", !state.rooms.length);
+  controlPanel.classList.toggle("guide-active", !editable);
+  controlPanel.classList.toggle("guide-complete", editable);
   layout?.classList.toggle("has-results", Boolean(state.rooms.length));
   lucide.createIcons();
 }
@@ -327,6 +337,7 @@ function renderMetrics() {
 }
 
 function renderRooms() {
+  const editable = canEditRooms();
   const visible = state.rooms.filter((room) => activeFilter === "all" || room.segment === activeFilter);
   if (!visible.length) {
     roomsList.innerHTML = `<div class="empty-state">As salas aparecerão aqui conforme você responder.</div>`;
@@ -336,14 +347,20 @@ function renderRooms() {
     const vacancies = Math.max(0, Number(room.capacity || 0) - Number(room.students || 0));
     return `
       <article class="room-item ${vacancies > 0 ? "open" : "full"}">
-        <button type="button" data-room-id="${escapeAttr(room.id)}">
+        <button type="button" data-room-id="${escapeAttr(room.id)}" ${editable ? "" : "disabled"}>
           <span class="room-name">${escapeHtml(room.grade)} - ${escapeHtml(room.shift)} ${room.letter ? `- ${escapeHtml(room.letter)}` : ""}</span>
           <span class="room-meta">${escapeHtml(room.segment)} · ${room.students || 0}/${room.capacity || 0} alunos · atualizado ${formatDateTime(room.updatedAt)}</span>
         </button>
         <div class="room-vacancy"><strong>${vacancies}</strong><small>vagas</small></div>
       </article>`;
   }).join("");
-  roomsList.querySelectorAll("[data-room-id]").forEach((button) => button.addEventListener("click", () => openRoomDialog(button.dataset.roomId)));
+  if (editable) {
+    roomsList.querySelectorAll("[data-room-id]").forEach((button) => button.addEventListener("click", () => openRoomDialog(button.dataset.roomId)));
+  }
+}
+
+function canEditRooms() {
+  return state.currentQuestion?.type === "done";
 }
 
 function openRoomDialog(roomId = null) {
