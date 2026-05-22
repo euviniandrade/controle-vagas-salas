@@ -1134,8 +1134,8 @@ function getCurrentBlueprint() {
 }
 
 function blueprintSummaryText(blueprint) {
-  if (!blueprint) return "Não encontrei uma estrutura importada para esta unidade. Vamos montar manualmente.";
-  return `${firstName()}, vou usar este mapa importado da planilha como ponto de partida. Você só confirma a estrutura e informa alunos atuais e capacidade máxima de cada sala.`;
+  if (!blueprint) return "Não encontrei uma estrutura vinculada a esta unidade. Vamos montar manualmente.";
+  return `${firstName()}, vou usar este mapa integrado ao sistema da Secretaria de Educação como ponto de partida. Você só confirma a estrutura e informa alunos atuais e capacidade máxima de cada sala.`;
 }
 
 function unitOverviewCard(blueprint) {
@@ -1147,9 +1147,9 @@ function unitOverviewCard(blueprint) {
     ? mixed.map((group) => {
         const grades = (group.grades || []).map(displayGrade).join(" + ");
         const shiftsText = (group.shifts || []).map(displayShift).join(" e ");
-        return `<li><strong>${escapeHtml(grades)}</strong><span>${escapeHtml(shiftsText || "Turno informado na planilha")}</span></li>`;
+        return `<li><strong>${escapeHtml(grades)}</strong><span>${escapeHtml(shiftsText || "Turno informado no sistema")}</span></li>`;
       }).join("")
-    : `<li><strong>Nenhuma turma mista identificada</strong><span>pela planilha atual</span></li>`;
+    : `<li><strong>Nenhuma turma mista identificada</strong><span>pela base atual da Secretaria de Educação</span></li>`;
   const segmentCards = segmentRows.map((row) => `
     <b>
       <span>${escapeHtml(row.label)}</span>
@@ -1160,7 +1160,7 @@ function unitOverviewCard(blueprint) {
     <div class="unit-map-card">
       <span>Mapa geral da unidade</span>
       <h3>${escapeHtml(blueprint.unit)}</h3>
-      <p>Olá, ${escapeHtml(firstName())}. Pela base importada, esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
+      <p>Olá, ${escapeHtml(firstName())}. Pela base da Secretaria de Educação, esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
       <div class="unit-map-kpis">
         ${segmentCards}
       </div>
@@ -1382,7 +1382,7 @@ function missionLabel() {
   if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
-  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base importada da planilha por unidade." };
+  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base da Secretaria de Educação por unidade." };
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
   if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
