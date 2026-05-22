@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v10";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9"];
+﻿const storageKey = "aps-controle-vagas-v11";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -88,6 +88,12 @@ function ensureDefaults() {
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
+  }
+  if (state.currentQuestion.type === "yesno" && state.currentQuestion.key === "hasContraturno" && unitHasPresetContraturno(state.unit)) {
+    state.answers.hasContraturno = true;
+    const blueprint = getCurrentBlueprint();
+    state.currentQuestion = blueprint ? { type: "blueprintConfirm" } : { type: "yesno", key: "hasHighSchool" };
+    if (blueprint) state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
   }
 }
 
@@ -1063,16 +1069,8 @@ function handleAnswer(q, value) {
     const blueprint = getCurrentBlueprint();
     if (blueprint) appendAssistant(unitOverviewCard(blueprint));
     if (unitHasPresetContraturno(state.unit)) {
-      state.answers.hasContraturno = true;
       appendAssistant(`${firstName()}, esta unidade já consta no sistema da Secretaria de Educação como unidade com contraturno. Então não vou perguntar se oferece; mais adiante eu vou direto ao ponto para registrar os alunos do contraturno e calcular as vagas corretamente.`);
-      if (blueprint) {
-        state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
-        appendAssistant(blueprintSummaryText(blueprint));
-        state.currentQuestion = { type: "blueprintConfirm" };
-        return;
-      }
-      appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
-      state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
+      advanceAfterContraturno(true);
       return;
     }
     appendAssistant(`${firstName()}, antes de avançar para as salas, confirme se a unidade oferece contraturno.`);
@@ -1080,16 +1078,12 @@ function handleAnswer(q, value) {
     return;
   }
   if (q.type === "yesno" && q.key === "hasContraturno") {
-    state.answers.hasContraturno = value === "Sim";
-    const blueprint = getCurrentBlueprint();
-    if (blueprint) {
-      state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
-      appendAssistant(blueprintSummaryText(blueprint));
-      state.currentQuestion = { type: "blueprintConfirm" };
+    if (unitHasPresetContraturno(state.unit)) {
+      appendAssistant(`${firstName()}, corrigindo aqui: esta unidade já consta com contraturno no sistema. Vou pular esta pergunta e seguir pela estrutura da unidade.`);
+      advanceAfterContraturno(true);
       return;
     }
-    appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
-    state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
+    advanceAfterContraturno(value === "Sim");
     return;
   }
   if (q.type === "blueprintConfirm") {
@@ -1173,6 +1167,19 @@ function handleAnswer(q, value) {
 
 function getCurrentBlueprint() {
   return unitBlueprints[state.unit] || null;
+}
+
+function advanceAfterContraturno(hasContraturno) {
+  state.answers.hasContraturno = hasContraturno;
+  const blueprint = getCurrentBlueprint();
+  if (blueprint) {
+    state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
+    appendAssistant(blueprintSummaryText(blueprint));
+    state.currentQuestion = { type: "blueprintConfirm" };
+    return;
+  }
+  appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
+  state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
 }
 
 function blueprintSummaryText(blueprint) {
