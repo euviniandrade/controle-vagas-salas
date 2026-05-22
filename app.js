@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v9";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8"];
+﻿const storageKey = "aps-controle-vagas-v10";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -151,6 +151,7 @@ function handleAnswerAction(event) {
   answerMount.querySelectorAll(".chip[data-value]").forEach((item) => item.classList.remove("selected"));
   choice.classList.add("selected");
   hidden.value = choice.dataset.value;
+  setTimeout(() => answerForm.requestSubmit(), 80);
 }
 
 function bindImmersiveShell() {
@@ -1264,7 +1265,7 @@ function startBlueprintCollection() {
     rooms: buildRoomsFromBlueprint(blueprint),
     roomIndex: 0,
   };
-  appendAssistant(`Perfeito. A partir de agora o painel ao lado vai funcionar como um espelho da unidade: cada sala preenchida aparece ali com alunos, capacidade e vagas disponíveis. Assim você acompanha em tempo real onde ainda há espaço para matrícula e onde a campanha não precisa forçar demanda.`);
+  appendAssistant(`Perfeito. Antes da primeira sala aparecer, já te explico: assim que você confirmar alunos e capacidade, vou abrir um painel ao lado chamado Espelho de salas. Ele mostra, em tempo real, cada turma preenchida, a capacidade, alunos atuais e vagas disponíveis. É esse painel que ajuda a campanha a focar onde há vaga real e evitar divulgar turmas que já estão lotadas.`);
   appendAssistant(`Vou seguir pelas ${state.prefillFlow.rooms.length} turmas previstas da unidade ${blueprint.unit}, uma sala por vez, sempre pensando na próxima campanha de matrículas: divulgar melhor onde há vaga e proteger as turmas que já estão lotadas.`);
   askNextPrefilledRoom();
 }

@@ -158,7 +158,7 @@ button { cursor: pointer; }
 .app {
   position: relative;
   z-index: 1;
-  width: min(1540px, calc(100% - 28px));
+  width: min(1840px, calc(100% - 16px));
   margin: 0 auto;
   padding: 18px 0 32px;
 }
@@ -233,7 +233,7 @@ button { cursor: pointer; }
   align-items: start;
 }
 .layout.has-results {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
 }
 .conversation, .control-panel {
   min-width: 0;
@@ -482,6 +482,7 @@ h1 {
   font-weight: 850;
 }
 .message { max-width: min(760px, 90%); display: grid; gap: 8px; animation: rise .28s ease both; }
+.message:has(.unit-map-card), .message:has(.report-card), .message:has(.review-card), .message:has(.tutorial-card) { max-width: 100%; }
 .message.assistant { justify-self: start; }
 .message.user { justify-self: end; }
 .message.is-archived { display: none; }
@@ -513,7 +514,7 @@ h1 {
 }
 .unit-map-kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
 }
 .unit-map-kpis b {
@@ -540,7 +541,7 @@ h1 {
 }
 .unit-map-split {
   display: grid;
-  grid-template-columns: .8fr 1.2fr;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 10px;
 }
 .unit-map-split section {
@@ -859,6 +860,10 @@ h1 {
   .chat-head { grid-template-columns: 1fr; }
   .classroom-scene { width: 100%; opacity: .46; }
   .collection-framework { grid-template-columns: 1fr; }
+}
+@media (max-width: 1500px) {
+  .layout.has-results { grid-template-columns: 1fr; }
+  .control-panel { position: static; max-height: none; }
 }
 @media (max-width: 760px) {
   .app { width: min(100% - 18px, 720px); }
