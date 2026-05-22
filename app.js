@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v7";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6"];
+﻿const storageKey = "aps-controle-vagas-v8";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -82,7 +82,7 @@ function ensureDefaults() {
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "blueprintConfirm", "roomCount", "roomStudents", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
+  const validQuestions = new Set(["director", "unit", "yesno", "blueprintConfirm", "roomCount", "roomStudents", "mixedStudents", "mixedConfirm", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -297,6 +297,15 @@ function renderAnswer() {
   }
   if (q.type === "roomStudents" || q.type === "roomCapacity") {
     answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="${q.type === "roomStudents" ? "Alunos atuais" : "Capacidade máxima"}" />`;
+    return;
+  }
+  if (q.type === "mixedStudents") {
+    answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="Alunos desta série" />`;
+    return;
+  }
+  if (q.type === "mixedConfirm") {
+    answerMount.innerHTML = choiceButtons(["Correto", "Corrigir composição"]);
+    bindSingleChoice();
   }
 }
 
@@ -346,10 +355,10 @@ function submitAnswer(event) {
 }
 
 function collectValue(q) {
-  if (["director", "unit", "roomCount", "roomStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
+  if (["director", "unit", "roomCount", "roomStudents", "mixedStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
     return answerMount.querySelector("select,input")?.value ?? "";
   }
-  if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm") return answerMount.querySelector("input")?.value || "";
+  if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm" || q.type === "mixedConfirm") return answerMount.querySelector("input")?.value || "";
   return "";
 }
 
@@ -456,7 +465,7 @@ function renderRooms() {
         <button type="button" data-room-id="${escapeAttr(room.id)}" ${editable ? "" : "disabled"}>
           <span class="room-name">${escapeHtml(room.grade)} - ${escapeHtml(room.shift)} ${room.letter ? `- ${escapeHtml(room.letter)}` : ""}</span>
           <span class="room-meta">${escapeHtml(room.segment)} · ${room.students || 0}/${room.capacity || 0} alunos · atualizado ${formatDateTime(room.updatedAt)}</span>
-          ${room.mixedWith?.length ? `<span class="room-mixed">Mista com ${escapeHtml(room.mixedWith.join(" + "))}</span>` : ""}
+          ${room.mixedWith?.length ? `<span class="room-mixed">Mista com ${escapeHtml(room.mixedWith.join(" + "))}${room.mixedBreakdown ? ` · ${escapeHtml(mixedBreakdownText(room))}` : ""}</span>` : ""}
         </button>
         <div class="room-vacancy"><strong>${vacancies}</strong><small>vagas</small></div>
       </article>`;
@@ -980,6 +989,8 @@ function currentQuestionPrompt() {
   if (q.type === "yesno" && q.key === "hasHighSchool") return "A unidade possui Ensino Médio?";
   if (q.type === "blueprintConfirm") return "Este mapa geral está correto para começarmos a confirmar alunos e capacidade, sala por sala?";
   if (q.type === "roomCount" && state.pendingSegment) return `${firstName()}, ${currentRoomCountText()}`;
+  if (q.type === "mixedStudents") return mixedStudentPrompt();
+  if (q.type === "mixedConfirm") return mixedConfirmationText();
   if (q.type === "roomStudents" && (state.pendingSegment || state.prefillFlow)) return `Agora ${roomLabel(currentPendingRoom())}: quantos alunos essa turma tem hoje?`;
   if (q.type === "roomCapacity" && (state.pendingSegment || state.prefillFlow)) return `E qual é a capacidade máxima da sala ${roomLabel(currentPendingRoom())}?`;
   if (q.type === "review") return "Confira o resumo antes do envio final. Se estiver correto, confirme para enviar ao painel administrativo.";
@@ -1114,6 +1125,21 @@ function handleAnswer(q, value) {
     askRoomCapacity();
     return;
   }
+  if (q.type === "mixedStudents") {
+    registerMixedStudentCount(value);
+    return;
+  }
+  if (q.type === "mixedConfirm") {
+    if (value === "Correto") {
+      delete state.mixedStudentFlow;
+      askRoomCapacity();
+      return;
+    }
+    const room = currentPendingRoom();
+    appendAssistant(`Sem problema, ${firstName()}. Vamos conferir novamente a composição da ${roomLabel(room)} para a campanha ficar precisa.`);
+    startMixedStudentFlow(room, true);
+    return;
+  }
   if (q.type === "roomCapacity") {
     currentPendingRoom().capacity = Number(value || 0);
     currentPendingRoom().updatedAt = new Date().toISOString();
@@ -1223,7 +1249,8 @@ function startBlueprintCollection() {
     rooms: buildRoomsFromBlueprint(blueprint),
     roomIndex: 0,
   };
-  appendAssistant(`Perfeito. Vou usar as ${state.prefillFlow.rooms.length} turmas previstas da unidade ${blueprint.unit} e confirmar sala por sala.`);
+  appendAssistant(`Perfeito. A partir de agora o painel ao lado vai funcionar como um espelho da unidade: cada sala preenchida aparece ali com alunos, capacidade e vagas disponíveis. Assim você acompanha em tempo real onde ainda há espaço para matrícula e onde a campanha não precisa forçar demanda.`);
+  appendAssistant(`Vou seguir pelas ${state.prefillFlow.rooms.length} turmas previstas da unidade ${blueprint.unit}, uma sala por vez, sempre pensando na próxima campanha de matrículas: divulgar melhor onde há vaga e proteger as turmas que já estão lotadas.`);
   askNextPrefilledRoom();
 }
 
@@ -1298,16 +1325,83 @@ function askRoomCount() {
 
 function askRoomStudents() {
   const room = currentPendingRoom();
-  const mixedNotice = room.mixedWith?.length
-    ? `Atenção: ${roomLabel(room)} é uma turma multisseriada/mista com ${room.mixedWith.join(" + ")}. Preencha considerando o total de alunos desta sala conjunta. `
-    : "";
-  appendAssistant(`${mixedNotice}Agora ${roomLabel(room)}: quantos alunos essa turma tem hoje?`);
+  if (room.mixedWith?.length) {
+    startMixedStudentFlow(room);
+    return;
+  }
+  appendAssistant(`Agora ${roomLabel(room)}: quantos alunos essa turma tem hoje? Esse número ajuda a campanha a direcionar divulgação somente para as turmas com vaga real.`);
   state.currentQuestion = { type: "roomStudents" };
+}
+
+function startMixedStudentFlow(room, reset = false) {
+  const grades = [room.grade, ...(room.mixedWith || [])];
+  state.mixedStudentFlow = {
+    roomId: room.id,
+    grades,
+    index: 0,
+    values: {},
+  };
+  if (!reset) {
+    appendAssistant(`${firstName()}, esta é uma turma multisseriada/mista: ${roomLabel(room)} reúne ${grades.join(" + ")}. Vou separar os alunos por série para que a leitura de vagas fique justa e a próxima campanha seja direcionada com precisão.`);
+  }
+  askMixedStudentPart();
+}
+
+function askMixedStudentPart() {
+  const flow = state.mixedStudentFlow;
+  const room = currentPendingRoom();
+  const grade = flow?.grades?.[flow.index] || room?.grade || "série";
+  appendAssistant(mixedStudentPrompt());
+  state.currentQuestion = { type: "mixedStudents" };
+}
+
+function mixedStudentPrompt() {
+  const flow = state.mixedStudentFlow;
+  const room = currentPendingRoom();
+  const grade = flow?.grades?.[flow.index] || room?.grade || "série";
+  return `${firstName()}, quantos alunos de ${grade} estudam na sala ${roomLabel(room)}?`;
+}
+
+function registerMixedStudentCount(value) {
+  const flow = state.mixedStudentFlow;
+  const room = currentPendingRoom();
+  if (!flow || !room) {
+    currentPendingRoom().students = Number(value || 0);
+    askRoomCapacity();
+    return;
+  }
+  const grade = flow.grades[flow.index];
+  flow.values[grade] = Math.max(0, Number(value || 0));
+  flow.index += 1;
+  if (flow.index < flow.grades.length) {
+    askMixedStudentPart();
+    return;
+  }
+  room.mixedBreakdown = { ...flow.values };
+  room.students = Object.values(flow.values).reduce((sum, amount) => sum + Number(amount || 0), 0);
+  appendAssistant(mixedConfirmationText());
+  state.currentQuestion = { type: "mixedConfirm" };
+}
+
+function mixedConfirmationText() {
+  const flow = state.mixedStudentFlow;
+  const room = currentPendingRoom();
+  const values = flow?.values || room?.mixedBreakdown || {};
+  const parts = Object.entries(values).map(([grade, amount]) => `${amount} de ${grade}`);
+  const total = Object.values(values).reduce((sum, amount) => sum + Number(amount || 0), 0);
+  if (!room || !parts.length) return "A composição da turma multisseriada está correta?";
+  return `Então, na sala ${roomLabel(room)}, temos ${total} aluno(s) ao todo, sendo ${parts.join(" e ")}. Está correto?`;
+}
+
+function mixedBreakdownText(room) {
+  return Object.entries(room.mixedBreakdown || {})
+    .map(([grade, amount]) => `${amount} ${grade}`)
+    .join(" + ");
 }
 
 function askRoomCapacity() {
   const room = currentPendingRoom();
-  appendAssistant(`E qual é a capacidade máxima da sala ${roomLabel(room)}?`);
+  appendAssistant(`Ótimo. E qual é a capacidade máxima da sala ${roomLabel(room)}? Com isso eu calculo as vagas disponíveis e deixo claro onde a campanha de matrículas deve atuar primeiro.`);
   state.currentQuestion = { type: "roomCapacity" };
 }
 
@@ -1384,6 +1478,8 @@ function missionLabel() {
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
   if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base da Secretaria de Educação por unidade." };
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
+  if (q.type === "mixedStudents") return { title: "Composição da sala", hint: "Separe os alunos por série da turma mista." };
+  if (q.type === "mixedConfirm") return { title: "Confirmar composição", hint: "Valide o total antes da capacidade." };
   if (q.type === "roomStudents") return { title: "Alunos da turma", hint: "Agora entra o número real de alunos." };
   if (q.type === "roomCapacity") return { title: "Capacidade máxima", hint: "Com isso calculamos as vagas disponíveis." };
   if (q.type === "review") return { title: "Conferir resumo", hint: "Nada será enviado antes da sua confirmação." };

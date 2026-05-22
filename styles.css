@@ -233,9 +233,10 @@ button { cursor: pointer; }
   align-items: start;
 }
 .layout.has-results {
-  grid-template-columns: minmax(0, 1.3fr) minmax(390px, .7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
 }
 .conversation, .control-panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -678,6 +679,7 @@ h1 {
   display: grid;
   gap: 12px;
   padding: 12px;
+  width: 100%;
   max-height: calc(100vh - 128px);
   overflow: auto;
 }
