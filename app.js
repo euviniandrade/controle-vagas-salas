@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v11";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10"];
+﻿const storageKey = "aps-controle-vagas-v12";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -12,7 +12,7 @@ const directorUnits = [
   ["Rafael", "EACF"], ["Fábio", "EAVB"],
 ].map(([director, unit]) => ({ director, unit }));
 
-const presetContraturnoUnits = new Set(["CAR", "CATS", "CACLI I", "CACLI II", "CAEA", "CAIS", "EACF", "EAVB"].map(normalizeName));
+const presetContraturnoUnits = new Set(["CAR", "CATS", "CACLI", "CACLI I", "CACLI 1", "CACLI II", "CACLI 2", "CAEA", "CAIS", "EACF", "EAVB"].map(normalizeName));
 
 const segmentPlan = [
   { key: "infantil", name: "Educação Infantil", grades: ["Maternal", "Pré I", "Pré II"], shifts: ["Manhã", "Tarde"], capacity: 22, required: true },
@@ -994,7 +994,9 @@ function currentQuestionPrompt() {
   const q = state.currentQuestion || { type: "director" };
   if (q.type === "director") return "Olá! Vou montar o mapa de vagas com você, um passo por vez. Para começar, qual é o seu nome?";
   if (q.type === "unit") return `${firstName()}, confirme a unidade para continuarmos.`;
-  if (q.type === "yesno" && q.key === "hasContraturno") return `${firstName()}, a unidade oferece contraturno?`;
+  if (q.type === "yesno" && q.key === "hasContraturno") return unitHasPresetContraturno(state.unit)
+    ? `${firstName()}, o contraturno desta unidade já está confirmado no sistema. Vou seguir para a estrutura.`
+    : `${firstName()}, esta unidade possui atendimento de contraturno para registrarmos neste levantamento?`;
   if (q.type === "yesno" && q.key === "hasHighSchool") return "A unidade possui Ensino Médio?";
   if (q.type === "blueprintConfirm") return "Este mapa geral está correto para começarmos a confirmar alunos e capacidade, sala por sala?";
   if (q.type === "roomCount" && state.pendingSegment) return `${firstName()}, ${currentRoomCountText()}`;
@@ -1073,7 +1075,7 @@ function handleAnswer(q, value) {
       advanceAfterContraturno(true);
       return;
     }
-    appendAssistant(`${firstName()}, antes de avançar para as salas, confirme se a unidade oferece contraturno.`);
+    appendAssistant(`${firstName()}, esta unidade não está marcada previamente com contraturno no sistema. Para montar o mapa completo, informe se há atendimento de contraturno para registrarmos neste levantamento.`);
     state.currentQuestion = { type: "yesno", key: "hasContraturno" };
     return;
   }
