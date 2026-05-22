@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v8";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7"];
+﻿const storageKey = "aps-controle-vagas-v9";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -11,6 +11,8 @@ const directorUnits = [
   ["Josy", "EAP"], ["Ednaldo", "EATW"], ["Tatiane", "EAA"], ["Alessandro", "EAJL"],
   ["Rafael", "EACF"], ["Fábio", "EAVB"],
 ].map(([director, unit]) => ({ director, unit }));
+
+const presetContraturnoUnits = new Set(["CAR", "CATS", "CACLI I", "CACLI II", "CAEA", "CAIS", "EACF", "EAVB"].map(normalizeName));
 
 const segmentPlan = [
   { key: "infantil", name: "Educação Infantil", grades: ["Maternal", "Pré I", "Pré II"], shifts: ["Manhã", "Tarde"], capacity: 22, required: true },
@@ -1059,6 +1061,19 @@ function handleAnswer(q, value) {
     state.weekId = currentWeek;
     const blueprint = getCurrentBlueprint();
     if (blueprint) appendAssistant(unitOverviewCard(blueprint));
+    if (unitHasPresetContraturno(state.unit)) {
+      state.answers.hasContraturno = true;
+      appendAssistant(`${firstName()}, esta unidade já consta no sistema da Secretaria de Educação como unidade com contraturno. Então não vou perguntar se oferece; mais adiante eu vou direto ao ponto para registrar os alunos do contraturno e calcular as vagas corretamente.`);
+      if (blueprint) {
+        state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
+        appendAssistant(blueprintSummaryText(blueprint));
+        state.currentQuestion = { type: "blueprintConfirm" };
+        return;
+      }
+      appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
+      state.currentQuestion = { type: "yesno", key: "hasHighSchool" };
+      return;
+    }
     appendAssistant(`${firstName()}, antes de avançar para as salas, confirme se a unidade oferece contraturno.`);
     state.currentQuestion = { type: "yesno", key: "hasContraturno" };
     return;
@@ -1492,7 +1507,9 @@ function missionLabel() {
 
 function segmentIntro(segment) {
   if (segment.key === "infantil") return "Educação Infantil é obrigatória no mapa. Vou passar por Maternal, Pré I e Pré II, manhã e tarde, uma turma por vez.";
-  if (segment.key === "contraturno") return "Agora entra o contraturno. Vou mapear por bloco e turno; onde não houver turma, responda 0.";
+  if (segment.key === "contraturno") return unitHasPresetContraturno(state.unit)
+    ? "Agora entra o contraturno, que já consta para esta unidade. Vou registrar os alunos por bloco e turno para mostrar as vagas reais da campanha."
+    : "Agora entra o contraturno informado pela unidade. Vou mapear por bloco e turno; onde não houver turma, responda 0.";
   if (segment.key === "fund1") return "Vamos para o Fundamental 1. Vou seguir do 1º ao 5º ano, manhã e tarde.";
   if (segment.key === "fund2") return "Agora Fundamental 2. Vou seguir do 6º ao 9º ano, manhã e tarde.";
   return "Como a unidade possui Ensino Médio, vamos até o 3º ano EM, manhã e tarde.";
@@ -1544,6 +1561,10 @@ function normalizeName(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function unitHasPresetContraturno(unit) {
+  return presetContraturnoUnits.has(normalizeName(unit));
 }
 
 function shiftText(shift) {
