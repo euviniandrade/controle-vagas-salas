@@ -782,8 +782,45 @@ function buildCloudPayload(reason) {
 }
 
 function loadState() {
-  legacyStorageKeys.forEach((key) => localStorage.removeItem(key));
-  try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch { return {}; }
+  const current = readStoredState(storageKey);
+  const legacyStates = legacyStorageKeys
+    .map((key) => ({ key, state: readStoredState(key) }))
+    .filter((item) => item.state && Object.keys(item.state).length);
+
+  if (legacyStates.length) {
+    localStorage.setItem("aps-controle-vagas-legacy-backup", JSON.stringify({
+      archivedAt: new Date().toISOString(),
+      states: legacyStates,
+    }));
+  }
+
+  if (current && Object.keys(current).length) return current;
+
+  const bestLegacy = legacyStates
+    .sort((a, b) => getStoredStateScore(b.state) - getStoredStateScore(a.state))[0];
+
+  if (bestLegacy?.state && getStoredStateScore(bestLegacy.state) > 0) {
+    localStorage.setItem(storageKey, JSON.stringify(bestLegacy.state));
+    return bestLegacy.state;
+  }
+
+  return {};
+}
+
+function readStoredState(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getStoredStateScore(storedState) {
+  const rooms = Array.isArray(storedState?.rooms) ? storedState.rooms : [];
+  const reports = Array.isArray(storedState?.reports) ? storedState.reports : [];
+  const movements = Array.isArray(storedState?.movements) ? storedState.movements : [];
+  const totals = rooms.reduce((sum, room) => sum + Number(room.students || 0) + Number(room.capacity || 0), 0);
+  return totals + (rooms.length * 10) + (reports.length * 500) + (movements.length * 200) + (storedState?.submittedAt ? 10000 : 0);
 }
 
 function formatDateTime(value) {
