@@ -185,6 +185,12 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, .7fr);
   gap: 12px;
 }
+.executive-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
 .panel { padding: 18px; overflow: hidden; }
 .panel.wide { grid-column: span 1; }
 .workbench .panel.wide:last-child { grid-column: 1 / -1; }
@@ -259,6 +265,7 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 980px) {
   .login-stage, .workbench, .admin-top { grid-template-columns: 1fr; }
+  .executive-grid { grid-template-columns: 1fr; }
   .admin-top { display: grid; align-items: start; }
   .signal-grid { grid-template-columns: repeat(2, 1fr); }
   .panel-head { display: grid; }

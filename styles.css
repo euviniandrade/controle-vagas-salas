@@ -723,10 +723,42 @@ h1 {
 .health-ring span { font-size: 2.15rem; font-weight: 950; transform: translateY(-8px); }
 .health-ring small { align-self: end; margin-bottom: 26px; color: rgba(255,255,255,.8); font-size: .78rem; font-weight: 850; }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.metrics div, .rooms-wrap, .segment-tabs, .room-tools { border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.08); }
+.metrics div, .rooms-wrap, .segment-tabs, .room-tools, .decision-panel { border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.08); }
 .metrics div { padding: 13px; }
 .metrics span { display: block; color: var(--muted); font-size: .82rem; }
 .metrics strong { display: block; margin-top: 4px; font-size: 1.7rem; }
+.decision-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(25,241,255,.12), rgba(255,212,71,.08)),
+    rgba(255,255,255,.07);
+}
+.decision-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.decision-head span { color: var(--aqua); font-size: .76rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+.decision-head strong { color: #fff; }
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.decision-grid b {
+  display: grid;
+  gap: 2px;
+  border-radius: 8px;
+  padding: 10px;
+  color: #06101f;
+  background: linear-gradient(135deg, var(--aqua), var(--gold));
+  font-size: 1.35rem;
+}
+.decision-grid small { font-size: .7rem; }
+.decision-panel p { margin: 0; color: var(--muted); line-height: 1.4; }
 .segment-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; }
 .segment-tab {
   min-height: 38px;

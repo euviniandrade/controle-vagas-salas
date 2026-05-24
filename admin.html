@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Controle de Vagas APS</title>
-    <link rel="stylesheet" href="./admin.css?v=20260521-adminlogin2" />
-    <script src="./config.js?v=20260521-adminlogin2"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260524-product" />
+    <script src="./config.js?v=20260524-product"></script>
   </head>
   <body>
     <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
@@ -68,6 +68,27 @@
           <article><span>Entradas</span><strong id="totalEntries">0</strong></article>
           <article class="risk"><span>Saídas</span><strong id="totalExits">0</strong></article>
           <article class="risk"><span>Índice evasão</span><strong id="evasionRate">0%</strong></article>
+        </section>
+
+        <section class="executive-grid" aria-label="Recomendações executivas">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <span>Foco de campanha</span>
+                <h2>Onde divulgar primeiro</h2>
+              </div>
+            </div>
+            <div id="campaignFocusList" class="reason-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <span>Atenção estratégica</span>
+                <h2>Unidades com maior risco</h2>
+              </div>
+            </div>
+            <div id="riskUnitsList" class="reason-list"></div>
+          </article>
         </section>
 
         <section class="workbench">
@@ -140,6 +161,6 @@
         </section>
       </section>
     </main>
-    <script type="module" src="./admin.js?v=20260521-adminlogin2"></script>
+    <script type="module" src="./admin.js?v=20260524-product"></script>
   </body>
 </html>

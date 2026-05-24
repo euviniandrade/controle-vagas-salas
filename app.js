@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v12";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11"];
+﻿const storageKey = "aps-controle-vagas-v13";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11", "aps-controle-vagas-v12"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -13,6 +13,20 @@ const directorUnits = [
 ].map(([director, unit]) => ({ director, unit }));
 
 const presetContraturnoUnits = new Set(["CAR", "CATS", "CACLI", "CACLI I", "CACLI 1", "CACLI II", "CACLI 2", "CAEA", "CAIS", "EACF", "EAVB"].map(normalizeName));
+
+const unitRuleOverrides = {
+  "CAR": { hasContraturno: true },
+  "CATS": { hasContraturno: true },
+  "CACLI": { hasContraturno: true, aliasOf: "CACLI I" },
+  "CACLI I": { hasContraturno: true },
+  "CACLI 1": { hasContraturno: true, aliasOf: "CACLI I" },
+  "CACLI II": { hasContraturno: true },
+  "CACLI 2": { hasContraturno: true, aliasOf: "CACLI II" },
+  "CAEA": { hasContraturno: true },
+  "CAIS": { hasContraturno: true },
+  "EACF": { hasContraturno: true },
+  "EAVB": { hasContraturno: true },
+};
 
 const segmentPlan = [
   { key: "infantil", name: "Educação Infantil", grades: ["Maternal", "Pré I", "Pré II"], shifts: ["Manhã", "Tarde"], capacity: 22, required: true },
@@ -409,6 +423,7 @@ function renderAll() {
   const submitted = Boolean(state.submittedAt);
   renderUnit();
   renderMetrics();
+  renderDecisionPanel();
   renderRooms();
   renderMissionDeck();
   $("#weekLabel").textContent = state.weekId || currentWeek;
@@ -458,6 +473,33 @@ function renderMetrics() {
   $("#vacancyTotal").textContent = totals.vacancies;
   const percent = totals.capacity ? Math.round((totals.vacancies / totals.capacity) * 100) : 0;
   document.querySelector(".health-ring").style.setProperty("--filled", `${percent}%`);
+}
+
+function renderDecisionPanel() {
+  const mount = $("#decisionPanel");
+  if (!mount) return;
+  const rule = getUnitRule(state.unit);
+  const totals = getTotals();
+  const expected = Math.max(Number(rule.expectedRooms || 0), totals.rooms);
+  const pending = Math.max(0, expected - totals.rooms);
+  const completedPercent = expected ? Math.min(100, Math.round((totals.rooms / expected) * 100)) : 0;
+  const openRooms = state.rooms
+    .map((room) => ({ ...room, vacancies: Math.max(0, Number(room.capacity || 0) - Number(room.students || 0)) }))
+    .sort((a, b) => b.vacancies - a.vacancies);
+  const fullRooms = openRooms.filter((room) => Number(room.capacity || 0) > 0 && room.vacancies <= 0).length;
+  const topOpportunity = openRooms.find((room) => room.vacancies > 0);
+  const segmentFocus = campaignSegmentFocus(state.rooms);
+  mount.innerHTML = `
+    <div class="decision-head">
+      <span>Leitura da campanha</span>
+      <strong>${completedPercent}% conferido</strong>
+    </div>
+    <div class="decision-grid">
+      <b>${pending}<small>salas pendentes</small></b>
+      <b>${fullRooms}<small>turmas lotadas</small></b>
+    </div>
+    <p>${topOpportunity ? `Maior oportunidade agora: ${escapeHtml(roomLabel(topOpportunity))}, com ${topOpportunity.vacancies} vaga(s).` : "As oportunidades aparecerão conforme capacidade e alunos forem confirmados."}</p>
+    <p>${segmentFocus ? `Segmento com maior espaço para campanha: ${escapeHtml(segmentFocus.segment)}.` : "O foco de campanha será calculado automaticamente."}</p>`;
 }
 
 function renderRooms() {
@@ -890,6 +932,12 @@ function buildReportSnapshot(type) {
     .map((room) => ({ ...room, vacancies: Math.max(0, Number(room.capacity || 0) - Number(room.students || 0)) }))
     .sort((a, b) => b.vacancies - a.vacancies)
     .slice(0, 8);
+  const criticalRooms = [...state.rooms]
+    .map((room) => ({ ...room, vacancies: Math.max(0, Number(room.capacity || 0) - Number(room.students || 0)) }))
+    .filter((room) => Number(room.capacity || 0) > 0 && room.vacancies <= 2)
+    .sort((a, b) => a.vacancies - b.vacancies)
+    .slice(0, 8);
+  const segmentFocus = campaignSegmentFocus(state.rooms);
   return {
     id: crypto.randomUUID(),
     type,
@@ -903,6 +951,8 @@ function buildReportSnapshot(type) {
     byShift,
     movements: { entries: sumMovement(entries), exits: sumMovement(exits), exitReasons },
     openRooms,
+    criticalRooms,
+    segmentFocus,
   };
 }
 
@@ -922,13 +972,26 @@ function sumMovement(movements) {
   return movements.reduce((sum, movement) => sum + Number(movement.amount || 0), 0);
 }
 
+function campaignSegmentFocus(rooms) {
+  const segments = Object.entries(groupTotals(rooms, "segment"))
+    .map(([segment, data]) => ({ segment, ...data }))
+    .filter((item) => item.vacancies > 0)
+    .sort((a, b) => b.vacancies - a.vacancies);
+  return segments[0] || null;
+}
+
 function reportCard(report) {
   const segmentRows = Object.entries(report.bySegment).map(([segment, data]) => `<li><strong>${escapeHtml(segment)}</strong><span>${data.vacancies} vagas · ${data.students}/${data.capacity} alunos</span></li>`).join("");
   const openRows = report.openRooms.map((room) => `<li><strong>${escapeHtml(roomLabel(room))}</strong><span>${room.vacancies} vagas</span></li>`).join("");
+  const criticalRows = (report.criticalRooms || []).map((room) => `<li><strong>${escapeHtml(roomLabel(room))}</strong><span>${room.vacancies} vaga(s)</span></li>`).join("");
+  const recommendation = report.segmentFocus
+    ? `Priorize comunicação para ${escapeHtml(report.segmentFocus.segment)}, onde há ${report.segmentFocus.vacancies} vaga(s) abertas.`
+    : "Não há foco de campanha com vaga aberta suficiente neste momento.";
   return `
     <div class="report-card">
       <span>Relatório gerado automaticamente</span>
       <h3>${escapeHtml(report.unit || "Unidade")}</h3>
+      <p><strong>Resumo executivo:</strong> ${recommendation} Evite impulsionar turmas com 0 a 2 vagas, pois elas exigem acompanhamento individual e não campanha ampla.</p>
       <div class="report-kpis">
         <b>${report.totals.rooms}<small>salas</small></b>
         <b>${report.totals.students}<small>alunos</small></b>
@@ -938,6 +1001,8 @@ function reportCard(report) {
       <ul>${segmentRows || "<li>Sem segmentos registrados.</li>"}</ul>
       <p>Maiores oportunidades: ${openRows ? "" : "nenhuma sala com vaga aberta no momento."}</p>
       ${openRows ? `<ul>${openRows}</ul>` : ""}
+      <p>Turmas para proteger de campanha ampla: ${criticalRows ? "" : "nenhuma turma crítica registrada até agora."}</p>
+      ${criticalRows ? `<ul>${criticalRows}</ul>` : ""}
       <em>O relatório foi enviado para sincronização e aparecerá no painel administrativo assim que o banco receber os dados.</em>
     </div>`;
 }
@@ -1168,7 +1233,7 @@ function handleAnswer(q, value) {
 }
 
 function getCurrentBlueprint() {
-  return unitBlueprints[state.unit] || null;
+  return unitBlueprints[getCanonicalUnit(state.unit)] || unitBlueprints[state.unit] || null;
 }
 
 function advanceAfterContraturno(hasContraturno) {
@@ -1574,7 +1639,27 @@ function normalizeName(value) {
 }
 
 function unitHasPresetContraturno(unit) {
-  return presetContraturnoUnits.has(normalizeName(unit));
+  return getUnitRule(unit).hasContraturno;
+}
+
+function getUnitRule(unit) {
+  const normalized = normalizeName(unit);
+  const rawKey = Object.keys(unitRuleOverrides).find((key) => normalizeName(key) === normalized);
+  const override = rawKey ? unitRuleOverrides[rawKey] : {};
+  const canonical = override.aliasOf || unit || "";
+  const blueprint = unitBlueprints[canonical] || unitBlueprints[unit] || null;
+  return {
+    unit: canonical || unit || "",
+    hasContraturno: Boolean(override.hasContraturno || presetContraturnoUnits.has(normalized)),
+    hasHighSchool: Boolean(blueprint?.hasHighSchool),
+    expectedRooms: Number(blueprint?.totalRooms || 0),
+    mixedGroups: blueprint?.mixedGroups || [],
+    blueprint,
+  };
+}
+
+function getCanonicalUnit(unit) {
+  return getUnitRule(unit).unit || unit;
 }
 
 function shiftText(shift) {

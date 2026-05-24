@@ -161,6 +161,26 @@ function renderDashboard() {
   $("#totalExits").textContent = movementTotals.exits;
   $("#evasionRate").textContent = totals.students ? `${Math.round((movementTotals.exits / totals.students) * 1000) / 10}%` : "0%";
 
+  const campaignFocus = [...units]
+    .filter((unit) => Number(unit.vacancies || 0) > 0)
+    .sort((a, b) => Number(b.vacancies || 0) - Number(a.vacancies || 0))
+    .slice(0, 6);
+  $("#campaignFocusList").innerHTML = campaignFocus.length
+    ? campaignFocus.map((unit) => `<div class="reason-item"><strong>${escapeHtml(unit.unit || "-")}</strong><span>${escapeHtml(unit.vacancies || 0)} vaga(s)</span></div>`).join("")
+    : `<div class="empty-state">Nenhuma unidade com vaga aberta sincronizada ainda.</div>`;
+
+  const exitsByUnit = movements.reduce((acc, movement) => {
+    if (movement.type === "Saída") acc[movement.unit || "-"] = (acc[movement.unit || "-"] || 0) + Number(movement.amount || 0);
+    return acc;
+  }, {});
+  const riskUnits = Object.entries(exitsByUnit)
+    .map(([unit, exits]) => ({ unit, exits, vacancies: Number((units.find((item) => item.unit === unit) || {}).vacancies || 0) }))
+    .sort((a, b) => b.exits - a.exits || a.vacancies - b.vacancies)
+    .slice(0, 6);
+  $("#riskUnitsList").innerHTML = riskUnits.length
+    ? riskUnits.map((item) => `<div class="reason-item"><strong>${escapeHtml(item.unit)}</strong><span>${escapeHtml(item.exits)} saída(s)</span></div>`).join("")
+    : `<div class="empty-state">Sem risco de evasão registrado até agora.</div>`;
+
   const query = $("#unitSearch").value.trim().toLowerCase();
   const filteredUnits = units.filter((unit) => `${unit.unit} ${unit.director}`.toLowerCase().includes(query));
   $("#unitTable").innerHTML = table([

@@ -412,6 +412,12 @@ function createDriveReport(payload, report) {
   body.appendParagraph((report.unit || payload.unit || "") + " | Diretor: " + (report.director || payload.director || "")).setHeading(DocumentApp.ParagraphHeading.HEADING2);
   body.appendParagraph("Gerado em " + Utilities.formatDate(new Date(report.createdAt || new Date()), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm"));
   body.appendParagraph("Resumo executivo").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  const focus = report.segmentFocus || {};
+  if (focus.segment) {
+    body.appendParagraph("Recomendacao de campanha: priorizar " + focus.segment + ", com " + String(focus.vacancies || 0) + " vaga(s) abertas. Evitar campanha ampla para turmas com 0 a 2 vagas.");
+  } else {
+    body.appendParagraph("Recomendacao de campanha: aguardar novas vagas abertas antes de acionar campanha ampla.");
+  }
   body.appendTable([
     ["Salas", "Capacidade", "Alunos", "Vagas", "Ocupacao"],
     [String(totals.rooms || 0), String(totals.capacity || 0), String(totals.students || 0), String(totals.vacancies || 0), String(report.occupancyRate || 0) + "%"],
@@ -419,6 +425,7 @@ function createDriveReport(payload, report) {
   appendObjectTable(body, "Vagas por segmento", report.bySegment || {});
   appendObjectTable(body, "Vagas por turno", report.byShift || {});
   appendOpenRooms(body, report.openRooms || []);
+  appendCriticalRooms(body, report.criticalRooms || []);
   appendExitReasons(body, report.movements && report.movements.exitReasons || {});
   doc.saveAndClose();
 
@@ -451,6 +458,20 @@ function appendOpenRooms(body, rooms) {
     String(room.vacancies || 0),
   ]));
   if (rows.length === 1) rows.push(["Sem vagas abertas", "-", "0", "0", "0"]);
+  body.appendTable(rows);
+}
+
+function appendCriticalRooms(body, rooms) {
+  body.appendParagraph("Turmas para proteger de campanha ampla").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  const rows = [["Turma", "Segmento", "Alunos", "Capacidade", "Vagas"]];
+  rooms.forEach((room) => rows.push([
+    [room.grade || "", room.shift || "", room.letter || ""].filter(Boolean).join(" - "),
+    room.segment || "",
+    String(room.students || 0),
+    String(room.capacity || 0),
+    String(room.vacancies || 0),
+  ]));
+  if (rows.length === 1) rows.push(["Sem turma critica", "-", "0", "0", "0"]);
   body.appendTable(rows);
 }
 
