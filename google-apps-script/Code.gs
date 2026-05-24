@@ -306,7 +306,7 @@ function syncPayload(ss, payload) {
   ]));
 
   replaceRowsForUnit(ss.getSheetByName("Evasao"), unit, 2, (payload.movements || [])
-    .filter((movement) => movement.type === "Saída")
+    .filter((movement) => isExitMovement(movement))
     .map((movement) => [
       movement.createdAt ? new Date(movement.createdAt) : receivedAt,
       unit,
@@ -353,12 +353,24 @@ function blueprintRows(payload, receivedAt) {
         Number(item.shifts[shift] || 0),
         blueprint.hasHighSchool ? "Sim" : "Nao",
         item.note || "",
-        "Planilha de salas por unidade",
+        "Sistema de Secretaria da Educação",
         safeJson(item),
       ]);
     });
   });
   return rows;
+}
+
+function isExitMovement(movement) {
+  return normalizeText(movement && movement.type) === "saida";
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function replaceReportRowsForUnit(ss, payload, receivedAt) {

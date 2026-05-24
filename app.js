@@ -786,22 +786,24 @@ function loadState() {
   const legacyStates = legacyStorageKeys
     .map((key) => ({ key, state: readStoredState(key) }))
     .filter((item) => item.state && Object.keys(item.state).length);
+  const allStoredStates = [
+    ...(current && Object.keys(current).length ? [{ key: storageKey, state: current }] : []),
+    ...legacyStates,
+  ];
 
-  if (legacyStates.length) {
+  if (allStoredStates.length) {
     localStorage.setItem("aps-controle-vagas-legacy-backup", JSON.stringify({
       archivedAt: new Date().toISOString(),
-      states: legacyStates,
+      states: allStoredStates,
     }));
   }
 
-  if (current && Object.keys(current).length) return current;
-
-  const bestLegacy = legacyStates
+  const bestStored = allStoredStates
     .sort((a, b) => getStoredStateScore(b.state) - getStoredStateScore(a.state))[0];
 
-  if (bestLegacy?.state && getStoredStateScore(bestLegacy.state) > 0) {
-    localStorage.setItem(storageKey, JSON.stringify(bestLegacy.state));
-    return bestLegacy.state;
+  if (bestStored?.state && getStoredStateScore(bestStored.state) > 0) {
+    localStorage.setItem(storageKey, JSON.stringify(bestStored.state));
+    return bestStored.state;
   }
 
   return {};
