@@ -996,6 +996,27 @@ h1 {
   padding-top: 4px;
 }
 .cl-actions .chip { flex: 1; min-width: 140px; justify-content: center; font-size: .93rem; }
+
+/* Helper message (hidden by default, shown on edit mode) */
+.cl-helper {
+  display: none;
+  background: rgba(77,184,232,.12);
+  border: 1px solid rgba(77,184,232,.35);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: .88rem;
+  color: #c8eeff;
+  line-height: 1.5;
+}
+.cl-helper.visible { display: block; }
+
+/* Editing mode: highlight all inputs */
+.blueprint-checklist.editing-mode .cl-input {
+  border-color: #4db8e8;
+  background: rgba(77,184,232,.18);
+  box-shadow: 0 0 0 2px rgba(77,184,232,.25);
+}
+.blueprint-checklist.editing-mode .cl-row { background: rgba(255,255,255,.04); border-radius: 6px; padding: 4px 6px; }
 @media (max-width: 520px) {
   .cl-row { grid-template-columns: 20px 1fr auto; gap: 6px; }
   .blueprint-checklist { max-width: 100%; }

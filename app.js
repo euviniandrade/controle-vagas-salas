@@ -347,12 +347,15 @@ function renderAnswer() {
     }).join("");
     answerMount.innerHTML = `
       <input type="hidden" id="bpVal" required />
-      <div class="blueprint-checklist">
+      <div class="blueprint-checklist" id="bpChecklist">
         ${mixedHtml}
+        <div class="cl-helper" id="bpHelper">
+          ✏️ <strong>Modo de ajuste:</strong> edite as quantidades de salas diretamente nos campos abaixo. Quando terminar, clique em <strong>✅ Confirmar estrutura</strong>.
+        </div>
         ${periodsHtml}
         <div class="cl-actions">
           <button class="chip selected" type="button" id="bpConfirmBtn">✅ Confirmar estrutura</button>
-          <button class="chip" type="button" id="bpManualBtn">✏️ Ajustar manualmente</button>
+          <button class="chip" type="button" id="bpManualBtn">✏️ Algo errado? Ajustar</button>
           <button class="chip chip-back" type="button" id="bpBackBtn">⬅️ Voltar</button>
         </div>
       </div>`;
@@ -363,8 +366,13 @@ function renderAnswer() {
       answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
     });
     document.getElementById("bpManualBtn").addEventListener("click", () => {
-      document.getElementById("bpVal").value = "manual";
-      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+      const checklist = document.getElementById("bpChecklist");
+      const helper = document.getElementById("bpHelper");
+      checklist.classList.add("editing-mode");
+      helper.classList.add("visible");
+      document.getElementById("bpManualBtn").style.display = "none";
+      const firstInput = answerMount.querySelector(".cl-input");
+      if (firstInput) { firstInput.focus(); firstInput.select(); }
     });
     document.getElementById("bpBackBtn").addEventListener("click", () => {
       document.getElementById("bpVal").value = "back";
@@ -1339,7 +1347,7 @@ function handleAnswer(q, value) {
       startBlueprintCollectionWithAdjustments(adjustments);
       return;
     }
-    appendAssistant("Sem problema! Vamos ajustar a estrutura da unidade manualmente, turma por turma. 📋");
+    appendAssistant("Sem problema! 📋 Vamos ajustar manualmente a estrutura, turma por turma.");
     state.rooms = [];
     state.answers.hasHighSchool = Boolean(getCurrentBlueprint()?.hasHighSchool);
     startNextSegment(0);
