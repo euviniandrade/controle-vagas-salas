@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v13";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11", "aps-controle-vagas-v12"];
+﻿const storageKey = "aps-controle-vagas-v14";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11", "aps-controle-vagas-v12", "aps-controle-vagas-v13"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
