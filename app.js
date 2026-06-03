@@ -353,6 +353,7 @@ function renderAnswer() {
         <div class="cl-actions">
           <button class="chip selected" type="button" id="bpConfirmBtn">✅ Confirmar estrutura</button>
           <button class="chip" type="button" id="bpManualBtn">✏️ Ajustar manualmente</button>
+          <button class="chip chip-back" type="button" id="bpBackBtn">⬅️ Voltar</button>
         </div>
       </div>`;
     document.getElementById("bpConfirmBtn").addEventListener("click", () => {
@@ -363,6 +364,10 @@ function renderAnswer() {
     });
     document.getElementById("bpManualBtn").addEventListener("click", () => {
       document.getElementById("bpVal").value = "manual";
+      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+    });
+    document.getElementById("bpBackBtn").addEventListener("click", () => {
+      document.getElementById("bpVal").value = "back";
       answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
     });
     return;
@@ -480,6 +485,7 @@ function formatAnswer(value, q = state.currentQuestion) {
     return room ? roomLabel(room) : value;
   }
   if (q.type === "blueprintConfirm") {
+    if (value === "back") return "⬅️ Voltar";
     return value.startsWith("confirm:") ? "✅ Estrutura confirmada" : "✏️ Ajustar manualmente";
   }
   return Array.isArray(value) ? value.join(", ") : value;
@@ -1301,7 +1307,7 @@ function handleAnswer(q, value) {
     const blueprint = getCurrentBlueprint();
     if (blueprint) appendAssistant(unitOverviewCard(blueprint));
     if (unitHasPresetContraturno(state.unit)) {
-      appendAssistant(`${firstName()}, esta unidade já consta no sistema da Secretaria de Educação como unidade com contraturno. Então não vou perguntar se oferece; mais adiante eu vou direto ao ponto para registrar os alunos do contraturno e calcular as vagas corretamente.`);
+      appendAssistant(`${firstName()}, esta unidade já consta no sistema da Sistema de Secretaria como unidade com contraturno. Então não vou perguntar se oferece; mais adiante eu vou direto ao ponto para registrar os alunos do contraturno e calcular as vagas corretamente.`);
       advanceAfterContraturno(true);
       return;
     }
@@ -1319,6 +1325,15 @@ function handleAnswer(q, value) {
     return;
   }
   if (q.type === "blueprintConfirm") {
+    if (value === "back") {
+      appendAssistant(`Sem problema, ${firstName()}! Voltando para a seleção de unidade. ⬅️`);
+      state.unit = "";
+      state.answers = {};
+      state.currentQuestion = { type: "unit" };
+      renderAll();
+      renderAnswer();
+      return;
+    }
     if (value.startsWith("confirm:")) {
       const adjustments = JSON.parse(value.slice(8));
       startBlueprintCollectionWithAdjustments(adjustments);
@@ -1417,7 +1432,7 @@ function advanceAfterContraturno(hasContraturno) {
 
 function blueprintSummaryText(blueprint) {
   if (!blueprint) return "Não encontrei uma estrutura vinculada a esta unidade. Vamos montar manualmente.";
-  return `${firstName()}, vou usar este mapa integrado ao sistema da Secretaria de Educação como ponto de partida. Você só confirma a estrutura e informa alunos atuais e capacidade máxima de cada sala.`;
+  return `👆 <strong>${firstName()}, veja o mapa acima</strong> — são os dados da sua unidade registrados no <strong>Sistema de Secretaria</strong>.\n\n✅ <strong>Tudo certo?</strong> Clique em <strong>Confirmar estrutura</strong> — é rápido!\n\n✏️ <strong>Alguma informação diferente?</strong> Clique em <strong>Ajustar manualmente</strong> e eu te guio pelos ajustes, um passo de cada vez. <em>É mais simples do que parece! 😊</em>\n\n⬅️ Errou a unidade? Use o botão <strong>Voltar</strong>.`;
 }
 
 function unitOverviewCard(blueprint) {
@@ -1429,56 +1444,61 @@ function unitOverviewCard(blueprint) {
     ? mixed.map((group) => {
         const grades = (group.grades || []).map(displayGrade).join(" + ");
         const shiftsText = (group.shifts || []).map(displayShift).join(" e ");
-        return `<li><strong>${escapeHtml(grades)}</strong><span>${escapeHtml(shiftsText || "Turno informado no sistema")}</span></li>`;
+        const roomCount = (blueprint.grades || []).filter((g) => (group.grades || []).includes(g.grade) && Object.keys(g.shifts || {}).length).reduce((sum, g) => sum + Object.values(g.shifts || {}).reduce((s, c) => s + Number(c), 0), 0);
+        return `<li><strong>⚠️ ${escapeHtml(grades)}</strong><span>${escapeHtml(shiftsText)}${roomCount ? " · " + roomCount + " sala(s)" : ""}</span></li>`;
       }).join("")
-    : `<li><strong>Nenhuma turma mista identificada</strong><span>pela base atual da Secretaria de Educação</span></li>`;
-  const segmentCards = segmentRows.map((row) => `
+    : `<li><strong>Nenhuma turma mista</strong><span>identificada no Sistema de Secretaria</span></li>`;
+  const segEmoji = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓" };
+  const segmentCards = segmentRows.filter((row) => row.total > 0).map((row) => `
     <b>
-      <span>${escapeHtml(row.label)}</span>
-      ${row.total}
+      <span>${segEmoji[row.label] || ""} ${escapeHtml(row.label)}</span>
+      <strong>${row.total}</strong><em>salas</em>
       <small>${escapeHtml(row.detail)}</small>
+      ${row.grades.length ? `<ul class="seg-grades">${row.grades.map((g) => `<li>${escapeHtml(g.grade)}: <strong>${g.total}</strong></li>`).join("")}</ul>` : ""}
     </b>`).join("");
   return `
     <div class="unit-map-card">
-      <span>Mapa geral da unidade</span>
+      <span>📋 Mapa geral da unidade — Sistema de Secretaria</span>
       <h3>${escapeHtml(blueprint.unit)}</h3>
-      <p>Olá, ${escapeHtml(firstName())}. Pela base da Secretaria de Educação, esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
+      <p>Olá, <strong>${escapeHtml(firstName())}</strong>! Esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
       <div class="unit-map-kpis">
         ${segmentCards}
       </div>
       <div class="unit-map-split">
         <section>
-          <em>Turnos previstos</em>
+          <em>🕐 Turnos previstos</em>
           <div class="unit-map-badges">
-            ${shifts.map((item) => `<i>${escapeHtml(item.shift)}: ${item.total}</i>`).join("")}
+            ${shifts.map((item) => `<i><strong>${escapeHtml(item.shift)}:</strong> ${item.total} salas</i>`).join("")}
           </div>
         </section>
         <section>
-          <em>Turmas multisseriadas/mistas</em>
+          <em>🔀 Turmas multisseriadas/mistas</em>
           <ul>${mixedList}</ul>
         </section>
       </div>
-      <p class="unit-map-note">Agora eu vou apenas confirmar o que for necessário e seguir sala por sala para alunos atuais, capacidade máxima e vagas disponíveis.</p>
     </div>`;
 }
 
 function blueprintSegmentSummary(blueprint) {
   const labels = ["Educação Infantil", "Fundamental 1", "Fundamental 2", "Ensino Médio"];
-  const totals = Object.fromEntries(labels.map((label) => [label, { total: 0, shifts: new Map() }]));
+  const totals = Object.fromEntries(labels.map((label) => [label, { total: 0, shifts: new Map(), grades: [] }]));
   (blueprint?.grades || []).forEach((gradePlan) => {
     const segment = displaySegment(gradePlan.segment);
-    if (!totals[segment]) totals[segment] = { total: 0, shifts: new Map() };
+    if (!totals[segment]) totals[segment] = { total: 0, shifts: new Map(), grades: [] };
+    let gradeTotal = 0;
     Object.entries(gradePlan.shifts || {}).forEach(([shift, count]) => {
       const amount = Number(count || 0);
       const label = displayShift(shift);
       totals[segment].total += amount;
       totals[segment].shifts.set(label, (totals[segment].shifts.get(label) || 0) + amount);
+      gradeTotal += amount;
     });
+    if (gradeTotal > 0) totals[segment].grades.push({ grade: displayGrade(gradePlan.grade), total: gradeTotal });
   });
   return labels.map((label) => {
-    const data = totals[label] || { total: 0, shifts: new Map() };
+    const data = totals[label] || { total: 0, shifts: new Map(), grades: [] };
     const detail = Array.from(data.shifts.entries()).map(([shift, total]) => `${shift}: ${total}`).join(" · ") || "não previsto";
-    return { label, total: data.total, detail };
+    return { label, total: data.total, detail, grades: data.grades };
   });
 }
 
@@ -1744,7 +1764,7 @@ function missionLabel() {
   if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
-  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base da Secretaria de Educação por unidade." };
+  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base da Sistema de Secretaria por unidade." };
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "mixedStudents") return { title: "Composição da sala", hint: "Separe os alunos por série da turma mista." };
   if (q.type === "mixedConfirm") return { title: "Confirmar composição", hint: "Valide o total antes da capacidade." };
