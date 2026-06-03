@@ -134,6 +134,8 @@ function bindEvents() {
   $("#exportJsonButton").addEventListener("click", exportJson);
   $("#importJsonInput").addEventListener("change", importJson);
   $("#clearDataButton").addEventListener("click", clearMyData);
+  $("#goBackButton").addEventListener("click", goBack);
+  $("#restartButton").addEventListener("click", confirmRestart);
   $("#saveRoomButton").addEventListener("click", saveRoomFromDialog);
   $("#deleteRoomButton").addEventListener("click", deleteEditingRoom);
   document.querySelectorAll(".segment-tab").forEach((button) => {
@@ -873,6 +875,54 @@ function clearMyData() {
   location.reload();
 }
 
+function confirmRestart() {
+  const confirmed = confirm(
+    "⚠️ Atenção!\n\nSe você recomeçar, TODO o preenchimento atual será apagado — salas, alunos, capacidades e histórico.\n\nEssa ação não tem volta.\n\nDeseja realmente recomeçar do zero?"
+  );
+  if (!confirmed) return;
+  legacyStorageKeys.concat([storageKey, "aps-controle-vagas-legacy-backup"]).forEach((key) => localStorage.removeItem(key));
+  location.reload();
+}
+
+function goBack() {
+  const q = state.currentQuestion;
+  if (!q) return;
+  const type = q.type;
+  if (type === "unit") {
+    state.currentQuestion = { type: "director" };
+    state.director = "";
+    state.unit = "";
+    chatLog.innerHTML = "";
+    chatLog.dataset.started = "";
+    appendAssistant("Vamos recomeçar. Qual é o seu nome?");
+  } else if (type === "yesno" || type === "blueprintConfirm") {
+    state.currentQuestion = { type: "unit" };
+    state.unit = "";
+    state.answers = {};
+    state.rooms = [];
+    appendAssistant(`${firstName()}, voltando para a seleção de unidade. ⬅️`);
+  } else if (type === "roomStudents" || type === "roomCapacity" || type === "mixedStudents" || type === "mixedConfirm") {
+    delete state.prefillFlow;
+    delete state.pendingSegment;
+    delete state.mixedStudentFlow;
+    state.rooms = [];
+    state.currentQuestion = { type: "blueprintConfirm" };
+    appendAssistant(`${firstName()}, voltei para a confirmação da estrutura. Você pode conferir novamente as salas antes de preencher. ⬅️`);
+  } else if (type === "review" || type === "done") {
+    state.currentQuestion = { type: "blueprintConfirm" };
+    state.submittedAt = "";
+    delete state.prefillFlow;
+    state.rooms = [];
+    appendAssistant(`${firstName()}, voltei para o início da coleta de salas. ⬅️`);
+  } else {
+    appendAssistant("Não é possível voltar deste ponto. Use o botão 🔄 Recomeçar se precisar começar do zero.");
+    return;
+  }
+  renderAll();
+  renderAnswer();
+  persist();
+}
+
 async function fetchAndShowReportLinks(silent = false) {
   if (!googleReady() || !state.unit) {
     if (!silent) appendAssistant("Não foi possível localizar o relatório. Certifique-se de que o formulário foi enviado e sincronizado.");
@@ -1460,7 +1510,7 @@ function unitOverviewCard(blueprint) {
   const segmentCards = segmentRows.filter((row) => row.total > 0).map((row) => `
     <b>
       <span>${segEmoji[row.label] || ""} ${escapeHtml(row.label)}</span>
-      <strong>${row.total}</strong><em>salas</em>
+      <span class="kpi-num-row"><strong>${row.total}</strong><em>salas</em></span>
       <small>${escapeHtml(row.detail)}</small>
       ${row.grades.length ? `<ul class="seg-grades">${row.grades.map((g) => `<li>${escapeHtml(g.grade)}: <strong>${g.total}</strong></li>`).join("")}</ul>` : ""}
     </b>`).join("");
@@ -1638,7 +1688,15 @@ function startMixedStudentFlow(room, reset = false) {
     values: {},
   };
   if (!reset) {
-    appendAssistant(`${firstName()}, esta é uma turma multisseriada/mista: ${roomLabel(room)} reúne ${grades.join(" + ")}. Vou separar os alunos por série para que a leitura de vagas fique justa e a próxima campanha seja direcionada com precisão.`);
+    const steps = grades.map((g, i) => `${i + 1}️⃣ <strong>Quantos alunos de ${g}</strong> estão nessa sala?`).join("\n");
+    appendAssistant(
+      `⚠️ <strong>Atenção — Turma Multisseriada!</strong>\n\n` +
+      `A sala <strong>${roomLabel(room)}</strong> reúne mais de uma série: <strong>${grades.join(" + ")}</strong>.\n\n` +
+      `Para o Radar de Vagas funcionar com precisão, vou perguntar os alunos de cada série separadamente. Veja a ordem:\n\n` +
+      `${steps}\n` +
+      `${grades.length + 1}️⃣ <strong>Qual é a capacidade máxima</strong> da sala?\n\n` +
+      `Simples assim! Vamos começar 👇`
+    );
   }
   askMixedStudentPart();
 }
@@ -1655,7 +1713,11 @@ function mixedStudentPrompt() {
   const flow = state.mixedStudentFlow;
   const room = currentPendingRoom();
   const grade = flow?.grades?.[flow.index] || room?.grade || "série";
-  return `${firstName()}, quantos alunos de ${grade} estudam na sala ${roomLabel(room)}?`;
+  const remaining = flow ? flow.grades.slice(flow.index + 1) : [];
+  const nextHint = remaining.length
+    ? `\n\n<em>(Depois vou perguntar: ${remaining.map((g) => `<strong>${g}</strong>`).join(" e ")})</em>`
+    : `\n\n<em>(Última série — depois só a capacidade da sala!)</em>`;
+  return `${flow?.index === 0 ? "🍎 " : "📌 "}<strong>${firstName()}, quantos alunos de ${grade}</strong> estão na sala ${roomLabel(room)}?${nextHint}`;
 }
 
 function registerMixedStudentCount(value) {

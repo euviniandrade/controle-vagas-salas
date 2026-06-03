@@ -1022,6 +1022,32 @@ h1 {
   .blueprint-checklist { max-width: 100%; }
 }
 
+/* ── Voltar / Recomeçar acima do answer-bar ─────────────────────────── */
+.answer-bar-actions {
+  display: flex;
+  gap: 8px;
+  padding: 6px 16px 0;
+}
+.bar-action-btn {
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.bar-action-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+.bar-action-btn.danger { border-color: rgba(255,100,100,.3); color: rgba(255,140,140,.8); }
+.bar-action-btn.danger:hover { background: rgba(255,80,80,.15); color: #ff8080; border-color: rgba(255,100,100,.6); }
+
+/* ── unit-map KPI inline "salas" ─────────────────────────────────────── */
+.unit-map-kpis b { display: flex; flex-direction: column; gap: 2px; }
+.unit-map-kpis b .kpi-num-row { display: flex; align-items: baseline; gap: 6px; }
+
 /* ── Segment grade breakdown ─────────────────────────────────────────── */
 .seg-grades {
   list-style: none;
