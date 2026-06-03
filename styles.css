@@ -913,3 +913,90 @@ h1 {
   .unit-map-kpis, .unit-map-split { grid-template-columns: 1fr; }
   .unit-map-card li { display: grid; }
 }
+
+/* ── Blueprint Checklist ─────────────────────────────────────────────── */
+.blueprint-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+  width: 100%;
+  max-width: 520px;
+}
+.cl-mixed {
+  background: rgba(255,200,0,.12);
+  border: 1px solid rgba(255,200,0,.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: .92rem;
+  line-height: 1.5;
+  color: #ffe680;
+}
+.cl-mixed strong { color: #ffe44d; }
+.cl-mixed ul { margin: 6px 0 0 4px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.cl-period {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cl-period h4 {
+  margin: 0 0 4px;
+  font-size: .95rem;
+  font-weight: 700;
+  color: #a8d8f0;
+  letter-spacing: .3px;
+}
+.cl-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.cl-row:last-child { border-bottom: none; }
+.cl-emoji { font-size: 1rem; text-align: center; }
+.cl-grade {
+  font-size: .93rem;
+  color: #e8f4ff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cl-grade strong { font-weight: 600; }
+.cl-grade small { font-size: .78rem; color: #ffc940; }
+.cl-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .85rem;
+  color: rgba(255,255,255,.65);
+  white-space: nowrap;
+}
+.cl-input {
+  width: 52px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  font-size: .9rem;
+  text-align: center;
+  font-weight: 600;
+}
+.cl-input:focus { outline: none; border-color: #4db8e8; background: rgba(77,184,232,.15); }
+.cl-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.cl-actions .chip { flex: 1; min-width: 140px; justify-content: center; font-size: .93rem; }
+@media (max-width: 520px) {
+  .cl-row { grid-template-columns: 20px 1fr auto; gap: 6px; }
+  .blueprint-checklist { max-width: 100%; }
+}

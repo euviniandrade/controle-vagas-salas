@@ -293,8 +293,67 @@ function renderAnswer() {
     return;
   }
   if (q.type === "blueprintConfirm") {
-    answerMount.innerHTML = choiceButtons(["Confirmar estrutura", "Ajustar manualmente"]);
-    bindSingleChoice();
+    const bp = getCurrentBlueprint();
+    if (!bp) {
+      answerMount.innerHTML = choiceButtons(["Confirmar estrutura", "Ajustar manualmente"]);
+      bindSingleChoice();
+      return;
+    }
+    const mixed = bp.mixedGroups || [];
+    const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+    const segEmoji = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓" };
+    const byShift = {};
+    (bp.grades || []).forEach((gp) => {
+      Object.entries(gp.shifts || {}).forEach(([rawShift, cnt]) => {
+        const shift = displayShift(rawShift);
+        const segment = displaySegment(gp.segment);
+        const grade = displayGrade(gp.grade);
+        const key = shift + "||" + grade + "||" + segment;
+        if (!byShift[shift]) byShift[shift] = [];
+        const mixedNote = (gp.mixedWithByShift && gp.mixedWithByShift[rawShift] && gp.mixedWithByShift[rawShift].note) || gp.note || "";
+        byShift[shift].push({ key, grade, segment, count: Number(cnt || 0), mixedNote });
+      });
+    });
+    const shiftOrder = ["Manhã", "Tarde", "Integral"];
+    const mixedHtml = mixed.length ? `<div class="cl-mixed">⚠️ <strong>Turmas multisseriadas nesta unidade:</strong><ul>${
+      mixed.map((g) => {
+        const grades = (g.grades || []).map(displayGrade).join(" + ");
+        const shifts = (g.shifts || []).map(displayShift).join(" e ");
+        return `<li>• <strong>${escapeHtml(grades)}</strong> — <em>${escapeHtml(shifts)}</em>${g.note ? " — " + escapeHtml(g.note) : ""}</li>`;
+      }).join("")
+    }</ul></div>` : "";
+    const periodsHtml = shiftOrder.filter((s) => byShift[s]).map((shift) => {
+      const rows = byShift[shift].map((item) => `
+        <div class="cl-row">
+          <span class="cl-emoji">${segEmoji[item.segment] || "📋"}</span>
+          <span class="cl-grade"><strong>${escapeHtml(item.grade)}</strong>${item.mixedNote ? ` <small>⚠️ ${escapeHtml(item.mixedNote)}</small>` : ""}</span>
+          <label class="cl-count">
+            <input type="number" class="cl-input" data-key="${escapeAttr(item.key)}" min="0" max="12" step="1" value="${item.count}" />
+            <span>turma(s)</span>
+          </label>
+        </div>`).join("");
+      return `<div class="cl-period"><h4>${shiftEmoji[shift] || ""} <strong>${shift}</strong></h4>${rows}</div>`;
+    }).join("");
+    answerMount.innerHTML = `
+      <input type="hidden" id="bpVal" required />
+      <div class="blueprint-checklist">
+        ${mixedHtml}
+        ${periodsHtml}
+        <div class="cl-actions">
+          <button class="chip selected" type="button" id="bpConfirmBtn">✅ Confirmar estrutura</button>
+          <button class="chip" type="button" id="bpManualBtn">✏️ Ajustar manualmente</button>
+        </div>
+      </div>`;
+    document.getElementById("bpConfirmBtn").addEventListener("click", () => {
+      const adj = {};
+      answerMount.querySelectorAll(".cl-input").forEach((inp) => { adj[inp.dataset.key] = Number(inp.value || 0); });
+      document.getElementById("bpVal").value = "confirm:" + JSON.stringify(adj);
+      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+    });
+    document.getElementById("bpManualBtn").addEventListener("click", () => {
+      document.getElementById("bpVal").value = "manual";
+      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+    });
     return;
   }
   if (q.type === "director") {
@@ -408,6 +467,9 @@ function formatAnswer(value, q = state.currentQuestion) {
   if (q.type === "dailyRoom") {
     const room = state.rooms.find((item) => item.id === value);
     return room ? roomLabel(room) : value;
+  }
+  if (q.type === "blueprintConfirm") {
+    return value.startsWith("confirm:") ? "✅ Estrutura confirmada" : "✏️ Ajustar manualmente";
   }
   return Array.isArray(value) ? value.join(", ") : value;
 }
@@ -1193,11 +1255,12 @@ function handleAnswer(q, value) {
     return;
   }
   if (q.type === "blueprintConfirm") {
-    if (value === "Confirmar estrutura") {
-      startBlueprintCollection();
+    if (value.startsWith("confirm:")) {
+      const adjustments = JSON.parse(value.slice(8));
+      startBlueprintCollectionWithAdjustments(adjustments);
       return;
     }
-    appendAssistant("Sem problema. Vamos ajustar manualmente a estrutura da unidade antes de preencher alunos e capacidade.");
+    appendAssistant("Sem problema! Vamos ajustar a estrutura da unidade manualmente, turma por turma. 📋");
     state.rooms = [];
     state.answers.hasHighSchool = Boolean(getCurrentBlueprint()?.hasHighSchool);
     startNextSegment(0);
@@ -1367,6 +1430,10 @@ function blueprintShiftSummary(blueprint) {
 }
 
 function startBlueprintCollection() {
+  startBlueprintCollectionWithAdjustments({});
+}
+
+function startBlueprintCollectionWithAdjustments(adjustments) {
   const blueprint = getCurrentBlueprint();
   if (!blueprint) {
     startNextSegment(0);
@@ -1375,31 +1442,39 @@ function startBlueprintCollection() {
   state.rooms = [];
   state.prefillFlow = {
     source: blueprint.unit,
-    rooms: buildRoomsFromBlueprint(blueprint),
+    rooms: buildRoomsFromBlueprintAdjusted(blueprint, adjustments),
     roomIndex: 0,
   };
-  appendAssistant(`Perfeito. Antes da primeira sala aparecer, já te explico: assim que você confirmar alunos e capacidade, vou abrir um painel ao lado chamado Espelho de salas. Ele mostra, em tempo real, cada turma preenchida, a capacidade, alunos atuais e vagas disponíveis. É esse painel que ajuda a campanha a focar onde há vaga real e evitar divulgar turmas que já estão lotadas.`);
-  appendAssistant(`Vou seguir pelas ${state.prefillFlow.rooms.length} turmas previstas da unidade ${blueprint.unit}, uma sala por vez, sempre pensando na próxima campanha de matrículas: divulgar melhor onde há vaga e proteger as turmas que já estão lotadas.`);
+  const total = state.prefillFlow.rooms.length;
+  appendAssistant(`✅ **Estrutura confirmada!** Vou seguir pelas **${total} turmas** previstas da unidade **${blueprint.unit}**, período por período.\n\nAssim que você informar os alunos e a capacidade de cada turma, o **Espelho de Salas** ao lado mostrará em tempo real as vagas disponíveis para a campanha. 🎯`);
   askNextPrefilledRoom();
 }
 
 function buildRoomsFromBlueprint(blueprint) {
+  return buildRoomsFromBlueprintAdjusted(blueprint, {});
+}
+
+function buildRoomsFromBlueprintAdjusted(blueprint, adjustments) {
   const rooms = [];
   (blueprint.grades || []).forEach((gradePlan) => {
-    Object.entries(gradePlan.shifts || {}).forEach(([rawShift, count]) => {
+    Object.entries(gradePlan.shifts || {}).forEach(([rawShift, originalCount]) => {
       const shift = displayShift(rawShift);
-      Array.from({ length: Number(count || 0) }).forEach((_, index) => {
+      const grade = displayGrade(gradePlan.grade);
+      const segment = displaySegment(gradePlan.segment);
+      const key = shift + "||" + grade + "||" + segment;
+      const count = adjustments[key] !== undefined ? Number(adjustments[key]) : Number(originalCount || 0);
+      Array.from({ length: count }).forEach((_, index) => {
         rooms.push({
           id: crypto.randomUUID(),
-          segment: displaySegment(gradePlan.segment),
-          grade: displayGrade(gradePlan.grade),
+          segment,
+          grade,
           shift,
           letter: String.fromCharCode(65 + index),
-          capacity: defaultCapacityForSegment(displaySegment(gradePlan.segment)),
+          capacity: defaultCapacityForSegment(segment),
           students: 0,
           note: gradePlan.note || "",
-          mixedWith: (gradePlan.mixedWithByShift?.[rawShift]?.with || []).map(displayGrade),
-          mixedNote: gradePlan.mixedWithByShift?.[rawShift]?.note || "",
+          mixedWith: ((gradePlan.mixedWithByShift && gradePlan.mixedWithByShift[rawShift] && gradePlan.mixedWithByShift[rawShift].with) || []).map(displayGrade),
+          mixedNote: (gradePlan.mixedWithByShift && gradePlan.mixedWithByShift[rawShift] && gradePlan.mixedWithByShift[rawShift].note) || "",
           updatedAt: new Date().toISOString(),
         });
       });
