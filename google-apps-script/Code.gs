@@ -39,6 +39,7 @@ function routeApi(params) {
     if (action === "requestAccess") return requestAccess(params);
     if (action === "forgotPassword") return forgotPassword(params);
     if (action === "aiCoach") return aiCoach(params);
+    if (action === "getLatestReport") return getLatestReport(params);
     return { ok: false, error: "Acao nao reconhecida." };
   } catch (error) {
     return { ok: false, error: String(error && error.message ? error.message : error) };
@@ -156,6 +157,21 @@ function adminDashboard(params) {
       evasion: getEvasion(ss.getSheetByName("Evasao")),
     },
   };
+}
+
+function getLatestReport(params) {
+  const unit = String(params.unit || "").trim();
+  if (!unit) return { ok: false, error: "Informe a unidade." };
+  const ss = SpreadsheetApp.openById(DEFAULT_SPREADSHEET_ID);
+  ensureSheets(ss);
+  const rows = readRows(ss.getSheetByName("Relatorios"));
+  const unitRows = rows.filter(function(row) {
+    return String(row[1] || "") === unit && (row[13] || row[14]);
+  });
+  if (!unitRows.length) return { ok: true, pdfUrl: "", docUrl: "", unit: unit };
+  unitRows.sort(function(a, b) { return new Date(b[0]) - new Date(a[0]); });
+  var latest = unitRows[0];
+  return { ok: true, unit: unit, docUrl: latest[13] || "", pdfUrl: latest[14] || "", createdAt: valueToString(latest[0]) };
 }
 
 function requestAccess(params) {

@@ -133,6 +133,7 @@ function bindEvents() {
   $("#exportCsvButton").addEventListener("click", exportCsv);
   $("#exportJsonButton").addEventListener("click", exportJson);
   $("#importJsonInput").addEventListener("change", importJson);
+  $("#clearDataButton").addEventListener("click", clearMyData);
   $("#saveRoomButton").addEventListener("click", saveRoomFromDialog);
   $("#deleteRoomButton").addEventListener("click", deleteEditingRoom);
   document.querySelectorAll(".segment-tab").forEach((button) => {
@@ -157,6 +158,8 @@ function handleAnswerAction(event) {
     if (button.dataset.action === "confirm-submit") confirmFinalSubmission();
     if (button.dataset.action === "correct-review") explainCorrectionMode();
     if (button.dataset.action === "tutorial") appendAssistant(directorTutorialCard());
+    if (button.dataset.action === "fetch-report") fetchAndShowReportLinks();
+    if (button.dataset.action === "clear-data") clearMyData();
     return;
   }
   const choice = event.target.closest(".chip[data-value]");
@@ -264,13 +267,21 @@ function renderAnswer() {
     return;
   }
   if (q.type === "done") {
+    const savedReport = state.latestReport;
+    const reportLinksHtml = savedReport && (savedReport.pdfUrl || savedReport.docUrl) ? `
+      <div class="done-report-links">
+        ${savedReport.pdfUrl ? `<a class="report-link-btn pdf" href="${escapeAttr(savedReport.pdfUrl)}" target="_blank" rel="noopener">📥 Baixar PDF</a>` : ""}
+        ${savedReport.docUrl ? `<a class="report-link-btn doc" href="${escapeAttr(savedReport.docUrl)}" target="_blank" rel="noopener">📄 Ver no Google Docs</a>` : ""}
+      </div>` : "";
     answerMount.innerHTML = `
       <div class="chips action-chips">
-        <button class="chip selected" id="dailyUpdateButton" type="button" data-action="daily-update">Atualizar alunos hoje</button>
-        <button class="chip" id="reportButton" type="button" data-action="report">Gerar relatório</button>
+        <button class="chip selected" type="button" data-action="daily-update">Atualizar alunos hoje</button>
+        <button class="chip" type="button" data-action="report">📊 Gerar relatório</button>
+        <button class="chip" type="button" data-action="fetch-report">📄 Ver PDF no Drive</button>
         <button class="chip" type="button" data-action="tutorial">Ver tutorial</button>
-        <button class="chip" id="restartGuide" type="button" data-action="restart">Revisar desde o início</button>
-      </div>`;
+        <button class="chip danger-chip" type="button" data-action="clear-data">🗑️ Apagar meu preenchimento</button>
+      </div>
+      ${reportLinksHtml}`;
     sendButton.disabled = true;
     return;
   }
@@ -832,10 +843,70 @@ async function syncToCloud(reason = "manual") {
     await fetch(googleScriptUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "syncVagas", spreadsheetId, payload }) });
     state.lastCloudSync = new Date().toISOString();
     localStorage.setItem(storageKey, JSON.stringify(state));
-    saveStatus.textContent = "Sincronizado online";
+    saveStatus.textContent = "Sincronizado ✓";
+    if (reason === "completed-guide" || reason === "report-generated") {
+      setTimeout(() => fetchAndShowReportLinks(true), 3500);
+    }
   } catch {
     saveStatus.textContent = "Falha ao sincronizar";
   }
+}
+
+function clearMyData() {
+  const name = state.director ? `, ${firstName()}` : "";
+  if (!confirm(`Apagar todo o preenchimento${name}?\n\nOs dados já enviados ao painel administrativo permanecem salvos. Apenas o rascunho local será removido.`)) return;
+  legacyStorageKeys.concat([storageKey, "aps-controle-vagas-legacy-backup"]).forEach((key) => localStorage.removeItem(key));
+  location.reload();
+}
+
+async function fetchAndShowReportLinks(silent = false) {
+  if (!googleReady() || !state.unit) {
+    if (!silent) appendAssistant("Não foi possível localizar o relatório. Certifique-se de que o formulário foi enviado e sincronizado.");
+    return;
+  }
+  if (!silent) appendAssistant("🔍 Buscando seu relatório no Google Drive...");
+  const data = await jsonpGet({ action: "getLatestReport", unit: state.unit });
+  if (!data || !data.ok || (!data.pdfUrl && !data.docUrl)) {
+    if (!silent) appendAssistant("O relatório ainda está sendo gerado. Tente novamente em alguns segundos ou acesse o painel do gestor.");
+    return;
+  }
+  state.latestReport = { pdfUrl: data.pdfUrl || "", docUrl: data.docUrl || "", fetchedAt: new Date().toISOString() };
+  persist();
+  appendAssistant(reportLinksCard(data));
+  renderAnswer();
+}
+
+function reportLinksCard(links) {
+  if (!links || (!links.pdfUrl && !links.docUrl)) return "";
+  return `
+    <div class="report-links-card">
+      <span>📄 Relatório institucional</span>
+      <h3>Pronto para download!</h3>
+      <p>O relatório da sua unidade foi gerado automaticamente e está salvo no Google Drive da APS. Você pode baixar o PDF ou abrir o documento completo a qualquer momento.</p>
+      <div class="report-links-actions">
+        ${links.pdfUrl ? `<a class="report-link-btn pdf" href="${escapeAttr(links.pdfUrl)}" target="_blank" rel="noopener">📥 Baixar PDF</a>` : ""}
+        ${links.docUrl ? `<a class="report-link-btn doc" href="${escapeAttr(links.docUrl)}" target="_blank" rel="noopener">📄 Abrir no Google Docs</a>` : ""}
+      </div>
+      <em>Gerado em ${links.createdAt ? new Date(links.createdAt).toLocaleString("pt-BR") : "agora"}</em>
+    </div>`;
+}
+
+async function jsonpGet(params) {
+  return new Promise((resolve) => {
+    const cbName = "apsJsonp_" + Date.now();
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => { delete window[cbName]; resolve(null); try { document.head.removeChild(script); } catch {} }, 12000);
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      try { document.head.removeChild(script); } catch {}
+      resolve(data);
+    };
+    const qs = new URLSearchParams({ api: "1", callback: cbName, ...params });
+    script.src = googleScriptUrl + "?" + qs;
+    script.onerror = () => { clearTimeout(timeout); delete window[cbName]; resolve(null); };
+    document.head.appendChild(script);
+  });
 }
 
 function buildCloudPayload(reason) {

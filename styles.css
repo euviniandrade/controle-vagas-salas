@@ -1000,3 +1000,58 @@ h1 {
   .cl-row { grid-template-columns: 20px 1fr auto; gap: 6px; }
   .blueprint-checklist { max-width: 100%; }
 }
+
+/* ── Danger icon button ──────────────────────────────────────────────── */
+.icon-btn.danger-icon { opacity: .55; }
+.icon-btn.danger-icon:hover { opacity: 1; color: #ff6b6b; }
+.chip.danger-chip { border-color: rgba(255,100,100,.4); color: #ff8080; }
+.chip.danger-chip:hover { background: rgba(255,80,80,.15); border-color: rgba(255,100,100,.7); }
+
+/* ── Report Links Card ───────────────────────────────────────────────── */
+.report-links-card {
+  display: grid;
+  gap: 12px;
+  min-width: min(540px, 100%);
+  background: linear-gradient(135deg, rgba(0,120,80,.25), rgba(0,80,120,.25));
+  border: 1px solid rgba(0,220,130,.3);
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+.report-links-card > span {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: #4dffb0;
+  opacity: .85;
+}
+.report-links-card h3 { margin: 0; font-size: 1.2rem; color: #e8fff6; }
+.report-links-card p { margin: 0; font-size: .9rem; color: rgba(255,255,255,.75); line-height: 1.5; }
+.report-links-card em { font-size: .78rem; color: rgba(255,255,255,.4); font-style: normal; }
+.report-links-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.report-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .15s, transform .12s;
+}
+.report-link-btn:hover { opacity: .88; transform: translateY(-1px); }
+.report-link-btn.pdf { background: #e53e3e; color: #fff; }
+.report-link-btn.doc { background: rgba(255,255,255,.12); color: #c8eeff; border: 1px solid rgba(255,255,255,.2); }
+
+/* ── Done report links inline ────────────────────────────────────────── */
+.done-report-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
