@@ -1,5 +1,5 @@
-﻿const storageKey = "aps-controle-vagas-v14";
-const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11", "aps-controle-vagas-v12", "aps-controle-vagas-v13"];
+﻿const storageKey = "aps-controle-vagas-v15";
+const legacyStorageKeys = ["aps-controle-vagas-v1", "aps-controle-vagas-v2", "aps-controle-vagas-v3", "aps-controle-vagas-v4", "aps-controle-vagas-v5", "aps-controle-vagas-v6", "aps-controle-vagas-v7", "aps-controle-vagas-v8", "aps-controle-vagas-v9", "aps-controle-vagas-v10", "aps-controle-vagas-v11", "aps-controle-vagas-v12", "aps-controle-vagas-v13", "aps-controle-vagas-v14"];
 const currentWeek = getIsoWeek(new Date());
 const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
@@ -916,29 +916,22 @@ function buildCloudPayload(reason) {
 
 function loadState() {
   const current = readStoredState(storageKey);
+
+  // Archive legacy keys for safety, then remove them — never migrate forward
   const legacyStates = legacyStorageKeys
     .map((key) => ({ key, state: readStoredState(key) }))
     .filter((item) => item.state && Object.keys(item.state).length);
-  const allStoredStates = [
-    ...(current && Object.keys(current).length ? [{ key: storageKey, state: current }] : []),
-    ...legacyStates,
-  ];
-
-  if (allStoredStates.length) {
-    localStorage.setItem("aps-controle-vagas-legacy-backup", JSON.stringify({
-      archivedAt: new Date().toISOString(),
-      states: allStoredStates,
-    }));
+  if (legacyStates.length) {
+    try {
+      localStorage.setItem("aps-controle-vagas-legacy-backup", JSON.stringify({
+        archivedAt: new Date().toISOString(),
+        states: legacyStates,
+      }));
+    } catch {}
+    legacyStates.forEach(({ key }) => localStorage.removeItem(key));
   }
 
-  const bestStored = allStoredStates
-    .sort((a, b) => getStoredStateScore(b.state) - getStoredStateScore(a.state))[0];
-
-  if (bestStored?.state && getStoredStateScore(bestStored.state) > 0) {
-    localStorage.setItem(storageKey, JSON.stringify(bestStored.state));
-    return bestStored.state;
-  }
-
+  if (current && getStoredStateScore(current) > 0) return current;
   return {};
 }
 
