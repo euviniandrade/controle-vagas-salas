@@ -98,7 +98,7 @@ function ensureDefaults() {
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "blueprintConfirm", "roomCount", "roomStudents", "mixedStudents", "mixedConfirm", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
+  const validQuestions = new Set(["director", "unit", "yesno", "blueprintPeriodConfirm", "blueprintConfirm", "roomCount", "roomStudents", "mixedStudents", "mixedConfirm", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -305,6 +305,40 @@ function renderAnswer() {
     answerMount.innerHTML = `<select required>${exitReasons.map((reason) => `<option>${escapeHtml(reason)}</option>`).join("")}</select>`;
     return;
   }
+  if (q.type === "blueprintPeriodConfirm") {
+    const flow = state.blueprintPeriodFlow;
+    const period = flow?.periods?.[flow.index];
+    if (!period) { answerMount.innerHTML = choiceButtons(["Confirmar tudo", "Ajustar"]); bindSingleChoice(); return; }
+    const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+    const segEmoji = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓" };
+    const gradeRows = period.grades.map((g) => `
+      <div class="period-grade-row">
+        <span>${segEmoji[g.segment] || "📋"} ${escapeHtml(g.grade)}</span>
+        <strong>${g.count} sala(s)</strong>
+      </div>`).join("");
+    answerMount.innerHTML = `
+      <div class="period-confirm-card">
+        <div class="period-confirm-header">
+          <span>${shiftEmoji[period.shift] || ""} <strong>${escapeHtml(period.shift)}</strong></span>
+          <span class="period-total">${period.total} salas no total</span>
+        </div>
+        <div class="period-grade-list">${gradeRows}</div>
+        <div class="period-confirm-actions">
+          <button class="chip selected" type="button" id="periodOkBtn">✅ Correto!</button>
+          <button class="chip" type="button" id="periodAdjustBtn">✏️ Precisa ajustar</button>
+        </div>
+      </div>
+      <input type="hidden" id="periodVal" required />`;
+    document.getElementById("periodOkBtn").addEventListener("click", () => {
+      document.getElementById("periodVal").value = "ok";
+      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+    });
+    document.getElementById("periodAdjustBtn").addEventListener("click", () => {
+      document.getElementById("periodVal").value = "adjust";
+      answerForm.dispatchEvent(new Event("submit", { bubbles: true }));
+    });
+    return;
+  }
   if (q.type === "blueprintConfirm") {
     const bp = getCurrentBlueprint();
     if (!bp) {
@@ -466,7 +500,7 @@ function collectValue(q) {
   if (["director", "unit", "roomCount", "roomStudents", "mixedStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
     return answerMount.querySelector("select,input")?.value ?? "";
   }
-  if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm" || q.type === "mixedConfirm") return answerMount.querySelector("input")?.value || "";
+  if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm" || q.type === "blueprintPeriodConfirm" || q.type === "mixedConfirm") return answerMount.querySelector("input")?.value || "";
   return "";
 }
 
@@ -494,6 +528,7 @@ function formatAnswer(value, q = state.currentQuestion) {
     const room = state.rooms.find((item) => item.id === value);
     return room ? roomLabel(room) : value;
   }
+  if (q.type === "blueprintPeriodConfirm") return value === "ok" ? "✅ Correto!" : "✏️ Precisa ajustar";
   if (q.type === "blueprintConfirm") {
     if (value === "back") return "⬅️ Voltar";
     return value.startsWith("confirm:") ? "✅ Estrutura confirmada" : "✏️ Ajustar manualmente";
@@ -1382,6 +1417,26 @@ function handleAnswer(q, value) {
     advanceAfterContraturno(value === "Sim");
     return;
   }
+  if (q.type === "blueprintPeriodConfirm") {
+    const flow = state.blueprintPeriodFlow;
+    if (value === "adjust") {
+      delete state.blueprintPeriodFlow;
+      state.currentQuestion = { type: "blueprintConfirm" };
+      appendAssistant("Sem problema! Abri o painel de ajuste — edite o que precisar e confirme. ✏️");
+      renderAll(); renderAnswer(); return;
+    }
+    if (flow && flow.index < flow.periods.length - 1) {
+      flow.index += 1;
+      const next = flow.periods[flow.index];
+      const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+      appendAssistant(`✅ Manhã confirmado! Agora o período da <strong>${next.shift}</strong> ${shiftEmoji[next.shift] || ""} — <strong>${next.total} salas</strong>. Confere?`);
+      state.currentQuestion = { type: "blueprintPeriodConfirm" };
+      renderAll(); renderAnswer(); return;
+    }
+    delete state.blueprintPeriodFlow;
+    startBlueprintCollectionWithAdjustments({});
+    return;
+  }
   if (q.type === "blueprintConfirm") {
     if (value === "back") {
       appendAssistant(`Sem problema, ${firstName()}! Voltando para a seleção de unidade. ⬅️`);
@@ -1481,7 +1536,8 @@ function advanceAfterContraturno(hasContraturno) {
   if (blueprint) {
     state.answers.hasHighSchool = Boolean(blueprint.hasHighSchool);
     appendAssistant(blueprintSummaryText(blueprint));
-    state.currentQuestion = { type: "blueprintConfirm" };
+    state.blueprintPeriodFlow = { periods: buildBlueprintPeriods(blueprint), index: 0 };
+    state.currentQuestion = { type: "blueprintPeriodConfirm" };
     return;
   }
   appendAssistant("Agora só mais um filtro: a unidade possui Ensino Médio?");
@@ -1490,7 +1546,24 @@ function advanceAfterContraturno(hasContraturno) {
 
 function blueprintSummaryText(blueprint) {
   if (!blueprint) return "Não encontrei uma estrutura vinculada a esta unidade. Vamos montar manualmente.";
-  return `👆 <strong>${firstName()}, veja o mapa acima</strong> — são os dados da sua unidade registrados no <strong>Sistema de Secretaria</strong>.\n\n✅ <strong>Tudo certo?</strong> Clique em <strong>Confirmar estrutura</strong> — é rápido!\n\n✏️ <strong>Alguma informação diferente?</strong> Clique em <strong>Ajustar manualmente</strong> e eu te guio pelos ajustes, um passo de cada vez. <em>É mais simples do que parece! 😊</em>\n\n⬅️ Errou a unidade? Use o botão <strong>Voltar</strong>.`;
+  return `👆 <strong>${firstName()}, veja o mapa acima.</strong>\n\nAgora vou confirmar <strong>período por período</strong> — Manhã e Tarde — para garantir que tudo está certo antes de começar. Vai ser rápido! 🚀`;
+}
+
+function buildBlueprintPeriods(blueprint) {
+  const shiftOrder = ["Manhã", "Tarde", "Integral"];
+  const byShift = {};
+  (blueprint.grades || []).forEach((gp) => {
+    Object.entries(gp.shifts || {}).forEach(([rawShift, cnt]) => {
+      const shift = displayShift(rawShift);
+      if (!byShift[shift]) byShift[shift] = [];
+      byShift[shift].push({ grade: displayGrade(gp.grade), count: Number(cnt || 0), rawShift });
+    });
+  });
+  return shiftOrder.filter((s) => byShift[s]).map((shift) => ({
+    shift,
+    grades: byShift[shift],
+    total: byShift[shift].reduce((sum, g) => sum + g.count, 0),
+  }));
 }
 
 function unitOverviewCard(blueprint) {

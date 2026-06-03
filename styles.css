@@ -1047,6 +1047,49 @@ h1 {
 /* ── unit-map KPI inline "salas" ─────────────────────────────────────── */
 .unit-map-kpis b { display: flex; flex-direction: column; gap: 2px; }
 .unit-map-kpis b .kpi-num-row { display: flex; align-items: baseline; gap: 6px; }
+.unit-map-kpis b > strong { font-size: 2.8rem !important; font-weight: 800; line-height: 1; }
+.unit-map-kpis b > em, .unit-map-kpis b .kpi-num-row em { font-size: .85rem; font-style: normal; text-transform: uppercase; letter-spacing: .5px; color: rgba(255,255,255,.55); }
+
+/* ── Period confirm card ─────────────────────────────────────────────── */
+.period-confirm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  padding: 18px 20px;
+  max-width: 480px;
+  width: 100%;
+}
+.period-confirm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.1rem;
+}
+.period-confirm-header strong { font-size: 1.3rem; }
+.period-total {
+  font-size: .85rem;
+  color: rgba(255,255,255,.55);
+  background: rgba(255,255,255,.08);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.period-grade-list { display: flex; flex-direction: column; gap: 6px; }
+.period-grade-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .92rem;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.04);
+  color: #e0f0ff;
+}
+.period-grade-row strong { color: #7dd8ff; font-size: 1rem; }
+.period-confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 4px; }
+.period-confirm-actions .chip { flex: 1; justify-content: center; font-size: .95rem; }
 
 /* ── Segment grade breakdown ─────────────────────────────────────────── */
 .seg-grades {
