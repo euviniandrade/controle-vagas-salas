@@ -4,6 +4,7 @@ const tokenKey = "aps-admin-token";
 const $ = (selector) => document.querySelector(selector);
 let dashboardData = { units: [], rooms: [], users: [], reports: [], movements: [], evasion: [] };
 let refreshTimer = null;
+let activeUnit = "all";
 
 initAdmin();
 
@@ -16,7 +17,121 @@ function initAdmin() {
   $("#accessForm").addEventListener("submit", createAccessRequest);
   $("#publicAccessButton")?.addEventListener("click", createPublicAccessRequest);
   $("#recoveryButton")?.addEventListener("click", requestPasswordRecovery);
+  $("#printUnitBtn")?.addEventListener("click", () => window.print());
+  document.querySelector(".unit-filter-btn[data-unit='all']").addEventListener("click", () => selectUnit("all"));
   if (localStorage.getItem(tokenKey)) restoreSession();
+}
+
+function selectUnit(unit) {
+  activeUnit = unit;
+  document.querySelectorAll(".unit-filter-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.unit === unit);
+  });
+  if (unit === "all") {
+    $("#overviewSection").hidden = false;
+    $("#unitDetailSection").hidden = true;
+    $("#dashboardTitle").textContent = "Resultados consolidados";
+  } else {
+    $("#overviewSection").hidden = true;
+    $("#unitDetailSection").hidden = false;
+    renderUnitDetail(unit);
+  }
+}
+
+function renderUnitDetail(unitName) {
+  const unitData = dashboardData.units.find((u) => u.unit === unitName) || {};
+  const rooms = dashboardData.rooms.filter((r) => r.unit === unitName);
+  const director = unitData.director || "-";
+
+  $("#dashboardTitle").textContent = `${unitName} · ${director}`;
+  $("#udRooms").textContent = unitData.totalRooms || rooms.length || 0;
+  $("#udCapacity").textContent = unitData.capacity || 0;
+  $("#udStudents").textContent = unitData.students || 0;
+  $("#udVacancies").textContent = unitData.vacancies || 0;
+  const occ = unitData.capacity > 0 ? Math.round((unitData.students / unitData.capacity) * 100) : 0;
+  $("#udOccupancy").textContent = `${occ}%`;
+
+  const shiftOrder = ["Manhã", "Tarde", "Integral"];
+  const segEmoji = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓", "Contraturno": "🔄" };
+
+  const byShift = {};
+  rooms.forEach((room) => {
+    const s = room.shift || "Outro";
+    if (!byShift[s]) byShift[s] = [];
+    byShift[s].push(room);
+  });
+
+  const shifts = [...shiftOrder.filter((s) => byShift[s]), ...Object.keys(byShift).filter((s) => !shiftOrder.includes(s))];
+  const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+
+  const body = $("#unitDetailBody");
+  if (!rooms.length) {
+    body.innerHTML = `<div class="empty-state" style="padding:40px;font-size:1.1rem;">Nenhuma turma sincronizada para esta unidade ainda.<br><small style="color:var(--muted)">Peça ao diretor para preencher e sincronizar.</small></div>`;
+    return;
+  }
+
+  body.innerHTML = shifts.map((shift) => {
+    const shiftRooms = byShift[shift] || [];
+    const totalCap = shiftRooms.reduce((s, r) => s + Number(r.capacity || 0), 0);
+    const totalStu = shiftRooms.reduce((s, r) => s + Number(r.students || 0), 0);
+    const totalVac = shiftRooms.reduce((s, r) => s + Number(r.vacancies || 0), 0);
+
+    const bySeg = {};
+    shiftRooms.forEach((r) => {
+      const seg = r.segment || "Outros";
+      if (!bySeg[seg]) bySeg[seg] = [];
+      bySeg[seg].push(r);
+    });
+
+    const roomCards = Object.entries(bySeg).map(([seg, segRooms]) => {
+      const divider = `<div class="segment-divider">${segEmoji[seg] || "📋"} ${escapeHtml(seg)}</div>`;
+      const cards = segRooms.map((room) => {
+        const cap = Number(room.capacity || 0);
+        const stu = Number(room.students || 0);
+        const vac = Number(room.vacancies || 0);
+        const pct = cap > 0 ? Math.min(100, Math.round((stu / cap) * 100)) : 0;
+        const barClass = pct >= 100 ? "full" : pct >= 80 ? "warn" : "";
+        const vagasClass = vac > 0 ? "pos" : "zero";
+        const label = [room.grade, room.letter].filter(Boolean).join(" ");
+        return `
+          <div class="room-card">
+            <div class="room-card-grade">${escapeHtml(label || "-")}</div>
+            <div class="room-card-seg">${escapeHtml(seg)}</div>
+            <div class="room-card-bar-wrap"><div class="room-card-bar ${barClass}" style="width:${pct}%"></div></div>
+            <div class="room-card-nums">
+              <span>${stu} alunos / ${cap} vagas</span>
+              <strong>${pct}%</strong>
+            </div>
+            <div class="room-vagas ${vagasClass}">${vac > 0 ? `✅ ${vac} vaga(s) livre(s)` : "🔴 Sem vagas"}</div>
+          </div>`;
+      }).join("");
+      return divider + `<div class="rooms-grid">${cards}</div>`;
+    }).join("");
+
+    return `
+      <div class="shift-block">
+        <div class="shift-block-header">
+          <h3>${shiftEmoji[shift] || "📋"} ${escapeHtml(shift)}</h3>
+          <div class="shift-badge">
+            <span class="shift-stat">${shiftRooms.length} sala(s)</span>
+            <span class="shift-stat">${totalStu}/${totalCap} alunos</span>
+            <span class="shift-stat vagas">🎯 ${totalVac} vaga(s)</span>
+          </div>
+        </div>
+        ${roomCards}
+      </div>`;
+  }).join("");
+}
+
+function buildUnitFilterButtons(units) {
+  const container = $("#unitFilterButtons");
+  container.innerHTML = units.map((u) => `
+    <button class="unit-filter-btn" data-unit="${escapeAttr(u.unit)}" type="button">
+      ${escapeHtml(u.unit)}
+    </button>`).join("");
+  container.querySelectorAll(".unit-filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => selectUnit(btn.dataset.unit));
+  });
 }
 
 async function login(event) {
@@ -148,6 +263,11 @@ async function createPublicAccessRequest() {
 
 function renderDashboard() {
   const units = dashboardData.units || [];
+  buildUnitFilterButtons(units);
+  if (activeUnit !== "all") {
+    selectUnit(activeUnit);
+    return;
+  }
   const rooms = dashboardData.rooms || [];
   const users = dashboardData.users || [];
   const reports = dashboardData.reports || [];
