@@ -38,71 +38,104 @@ function selectUnit(unit) {
   }
 }
 
+const SHIFT_ORDER = ["Manhã", "Tarde", "Integral"];
+const SHIFT_EMOJI = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+const SEG_EMOJI = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓", "Contraturno": "🔄" };
+
 function renderUnitDetail(unitName) {
   const unitData = dashboardData.units.find((u) => u.unit === unitName) || {};
   const rooms = dashboardData.rooms.filter((r) => r.unit === unitName);
   const director = unitData.director || "-";
+  const syncDate = unitData.updatedAt ? formatDateTime(unitData.updatedAt) : "—";
 
-  $("#dashboardTitle").textContent = `${unitName} · ${director}`;
+  $("#dashboardTitle").textContent = `${unitName}`;
+
+  // KPIs
+  const cap = Number(unitData.capacity || 0);
+  const stu = Number(unitData.students || 0);
+  const vac = Number(unitData.vacancies || 0);
+  const occ = cap > 0 ? Math.round((stu / cap) * 100) : 0;
   $("#udRooms").textContent = unitData.totalRooms || rooms.length || 0;
-  $("#udCapacity").textContent = unitData.capacity || 0;
-  $("#udStudents").textContent = unitData.students || 0;
-  $("#udVacancies").textContent = unitData.vacancies || 0;
-  const occ = unitData.capacity > 0 ? Math.round((unitData.students / unitData.capacity) * 100) : 0;
+  $("#udCapacity").textContent = cap;
+  $("#udStudents").textContent = stu;
+  $("#udVacancies").textContent = vac;
   $("#udOccupancy").textContent = `${occ}%`;
 
-  const shiftOrder = ["Manhã", "Tarde", "Integral"];
-  const segEmoji = { "Educação Infantil": "🍎", "Fundamental 1": "📚", "Fundamental 2": "📖", "Ensino Médio": "🎓", "Contraturno": "🔄" };
+  // Director info strip
+  const dirStrip = document.getElementById("udDirectorStrip");
+  if (dirStrip) {
+    dirStrip.innerHTML = `<span>👤 <strong>${escapeHtml(director)}</strong></span><span>📅 Sincronizado: <strong>${escapeHtml(syncDate)}</strong></span><span>🏫 <strong>${escapeHtml(unitName)}</strong></span>`;
+  }
 
-  const byShift = {};
-  rooms.forEach((room) => {
-    const s = room.shift || "Outro";
-    if (!byShift[s]) byShift[s] = [];
-    byShift[s].push(room);
+  // Segment summary
+  const bySeg = {};
+  rooms.forEach((r) => {
+    const seg = r.segment || "Outros";
+    if (!bySeg[seg]) bySeg[seg] = { cap: 0, stu: 0, vac: 0, count: 0 };
+    bySeg[seg].cap += Number(r.capacity || 0);
+    bySeg[seg].stu += Number(r.students || 0);
+    bySeg[seg].vac += Number(r.vacancies || 0);
+    bySeg[seg].count += 1;
   });
-
-  const shifts = [...shiftOrder.filter((s) => byShift[s]), ...Object.keys(byShift).filter((s) => !shiftOrder.includes(s))];
-  const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
+  const segSummary = document.getElementById("udSegSummary");
+  if (segSummary) {
+    segSummary.innerHTML = Object.entries(bySeg).map(([seg, d]) => {
+      const pct = d.cap > 0 ? Math.round((d.stu / d.cap) * 100) : 0;
+      return `<div class="seg-kpi">
+        <div class="seg-kpi-label">${SEG_EMOJI[seg] || "📋"} ${escapeHtml(seg)}</div>
+        <div class="seg-kpi-nums"><strong>${d.vac}</strong> vagas · ${d.stu}/${d.cap} · ${pct}%</div>
+        <div class="seg-kpi-bar-wrap"><div class="seg-kpi-bar" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join("") || `<div class="empty-state">Nenhum dado disponível.</div>`;
+  }
 
   const body = $("#unitDetailBody");
   if (!rooms.length) {
-    body.innerHTML = `<div class="empty-state" style="padding:40px;font-size:1.1rem;">Nenhuma turma sincronizada para esta unidade ainda.<br><small style="color:var(--muted)">Peça ao diretor para preencher e sincronizar.</small></div>`;
+    body.innerHTML = `<div class="empty-state" style="padding:48px;font-size:1.1rem;text-align:center;">Nenhuma turma sincronizada ainda.<br><small>Peça ao diretor para preencher e sincronizar.</small></div>`;
     return;
   }
 
+  // Group by shift
+  const byShift = {};
+  rooms.forEach((r) => {
+    const s = r.shift || "Outro";
+    if (!byShift[s]) byShift[s] = [];
+    byShift[s].push(r);
+  });
+  const shifts = [...SHIFT_ORDER.filter((s) => byShift[s]), ...Object.keys(byShift).filter((s) => !SHIFT_ORDER.includes(s))];
+
   body.innerHTML = shifts.map((shift) => {
     const shiftRooms = byShift[shift] || [];
-    const totalCap = shiftRooms.reduce((s, r) => s + Number(r.capacity || 0), 0);
-    const totalStu = shiftRooms.reduce((s, r) => s + Number(r.students || 0), 0);
-    const totalVac = shiftRooms.reduce((s, r) => s + Number(r.vacancies || 0), 0);
+    const tCap = shiftRooms.reduce((a, r) => a + Number(r.capacity || 0), 0);
+    const tStu = shiftRooms.reduce((a, r) => a + Number(r.students || 0), 0);
+    const tVac = shiftRooms.reduce((a, r) => a + Number(r.vacancies || 0), 0);
 
-    const bySeg = {};
+    const segGroups = {};
     shiftRooms.forEach((r) => {
       const seg = r.segment || "Outros";
-      if (!bySeg[seg]) bySeg[seg] = [];
-      bySeg[seg].push(r);
+      if (!segGroups[seg]) segGroups[seg] = [];
+      segGroups[seg].push(r);
     });
 
-    const roomCards = Object.entries(bySeg).map(([seg, segRooms]) => {
-      const divider = `<div class="segment-divider">${segEmoji[seg] || "📋"} ${escapeHtml(seg)}</div>`;
+    const roomCards = Object.entries(segGroups).map(([seg, segRooms]) => {
+      const divider = `<div class="segment-divider">${SEG_EMOJI[seg] || "📋"} ${escapeHtml(seg)}</div>`;
       const cards = segRooms.map((room) => {
-        const cap = Number(room.capacity || 0);
-        const stu = Number(room.students || 0);
-        const vac = Number(room.vacancies || 0);
-        const pct = cap > 0 ? Math.min(100, Math.round((stu / cap) * 100)) : 0;
+        const rCap = Number(room.capacity || 0);
+        const rStu = Number(room.students || 0);
+        const rVac = Number(room.vacancies || 0);
+        const pct = rCap > 0 ? Math.min(100, Math.round((rStu / rCap) * 100)) : 0;
         const barClass = pct >= 100 ? "full" : pct >= 80 ? "warn" : "";
-        const vagasClass = vac > 0 ? "pos" : "zero";
-        const label = [room.grade, room.letter].filter(Boolean).join(" ");
+        const vagasClass = rVac > 0 ? "pos" : "zero";
+        const label = [room.grade, room.letter].filter(Boolean).join(" – ");
+        const rid = `room_${escapeAttr(room.id || (room.grade + room.shift + room.letter))}`;
         return `
-          <div class="room-card">
+          <div class="room-card" data-rid="${rid}" data-room='${JSON.stringify({ grade: room.grade, letter: room.letter, shift: room.shift, segment: room.segment, capacity: rCap, students: rStu, vacancies: rVac }).replace(/'/g,"&#39;")}'>
             <div class="room-card-grade">${escapeHtml(label || "-")}</div>
             <div class="room-card-seg">${escapeHtml(seg)}</div>
             <div class="room-card-bar-wrap"><div class="room-card-bar ${barClass}" style="width:${pct}%"></div></div>
-            <div class="room-card-nums">
-              <span>${stu} alunos / ${cap} vagas</span>
-              <strong>${pct}%</strong>
-            </div>
-            <div class="room-vagas ${vagasClass}">${vac > 0 ? `✅ ${vac} vaga(s) livre(s)` : "🔴 Sem vagas"}</div>
+            <div class="room-card-nums"><span>${rStu} alunos / ${rCap} cap.</span><strong>${pct}%</strong></div>
+            <div class="room-vagas ${vagasClass}">${rVac > 0 ? `✅ ${rVac} livre(s)` : "🔴 Sem vagas"}</div>
+            <div class="room-card-cta">🪑 Ver mapa de cadeiras</div>
           </div>`;
       }).join("");
       return divider + `<div class="rooms-grid">${cards}</div>`;
@@ -111,24 +144,108 @@ function renderUnitDetail(unitName) {
     return `
       <div class="shift-block">
         <div class="shift-block-header">
-          <h3>${shiftEmoji[shift] || "📋"} ${escapeHtml(shift)}</h3>
+          <h3>${SHIFT_EMOJI[shift] || "📋"} ${escapeHtml(shift)}</h3>
           <div class="shift-badge">
             <span class="shift-stat">${shiftRooms.length} sala(s)</span>
-            <span class="shift-stat">${totalStu}/${totalCap} alunos</span>
-            <span class="shift-stat vagas">🎯 ${totalVac} vaga(s)</span>
+            <span class="shift-stat">${tStu}/${tCap} alunos</span>
+            <span class="shift-stat vagas">🎯 ${tVac} vaga(s)</span>
           </div>
         </div>
         ${roomCards}
       </div>`;
   }).join("");
+
+  // Bind room card clicks
+  body.querySelectorAll(".room-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      try { openSeatModal(JSON.parse(card.dataset.room.replace(/&#39;/g, "'"))); } catch {}
+    });
+  });
+}
+
+// ── Seat Map Modal ──
+function openSeatModal(room) {
+  const existing = document.getElementById("seatModal");
+  if (existing) existing.remove();
+
+  const cap = Number(room.capacity || 0);
+  const stu = Number(room.students || 0);
+  const vac = Number(room.vacancies || 0);
+  const pct = cap > 0 ? Math.round((stu / cap) * 100) : 0;
+  const label = [room.grade, room.letter].filter(Boolean).join(" – ");
+
+  const modal = document.createElement("div");
+  modal.id = "seatModal";
+  modal.className = "seat-modal-overlay";
+  modal.innerHTML = `
+    <div class="seat-modal">
+      <button class="seat-modal-close" id="closeSeatModal">✕</button>
+      <div class="seat-modal-header">
+        <div>
+          <p class="eyebrow">${escapeHtml(room.segment || "")} · ${escapeHtml(room.shift || "")}</p>
+          <h2>${escapeHtml(label)}</h2>
+        </div>
+        <div class="seat-modal-kpis">
+          <div class="sm-kpi"><span>Capacidade</span><strong>${cap}</strong></div>
+          <div class="sm-kpi"><span>Alunos</span><strong>${stu}</strong></div>
+          <div class="sm-kpi hot"><span>Vagas</span><strong>${vac}</strong></div>
+          <div class="sm-kpi"><span>Ocupação</span><strong>${pct}%</strong></div>
+        </div>
+      </div>
+      <div class="seat-legend">
+        <span><i class="seat-ico occupied"></i> Ocupada (${stu})</span>
+        <span><i class="seat-ico available"></i> Disponível (${vac})</span>
+      </div>
+      <div class="classroom-view">
+        <div class="blackboard">📋 Quadro</div>
+        <div class="teacher-desk">🪑 Professor</div>
+        ${buildSeatGrid(cap, stu)}
+      </div>
+      <div class="seat-modal-footer">
+        <p>Legenda: cadeiras <strong style="color:#4dffb8">verdes</strong> = vagas disponíveis · cadeiras <strong style="color:#4a5568">cinzas</strong> = alunos matriculados</p>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById("closeSeatModal").addEventListener("click", () => modal.remove());
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function buildSeatGrid(capacity, occupied) {
+  if (capacity <= 0) return `<div class="seat-empty">Capacidade não informada</div>`;
+  const cols = capacity <= 20 ? 4 : capacity <= 36 ? 6 : capacity <= 48 ? 8 : 10;
+  const seats = Array.from({ length: capacity }, (_, i) => {
+    const isOcc = i < occupied;
+    return `<div class="seat ${isOcc ? "occupied" : "available"}" title="${isOcc ? "Ocupada" : "Disponível"}">
+      ${seatSvg(isOcc)}
+    </div>`;
+  });
+  // Group into rows with aisle
+  const rows = [];
+  for (let i = 0; i < seats.length; i += cols) {
+    const half = Math.ceil(cols / 2);
+    const rowSeats = seats.slice(i, i + cols);
+    const left = rowSeats.slice(0, half).join("");
+    const right = rowSeats.slice(half).join("");
+    rows.push(`<div class="seat-row">${left}<div class="seat-aisle"></div>${right}</div>`);
+  }
+  return `<div class="seat-grid">${rows.join("")}</div>`;
+}
+
+function seatSvg(occupied) {
+  const color = occupied ? "#2d3748" : "#4dffb8";
+  const shade = occupied ? "#1a202c" : "#00c97a";
+  return `<svg viewBox="0 0 32 36" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="10" width="28" height="18" rx="3" fill="${color}" stroke="${shade}" stroke-width="1.5"/>
+    <rect x="6" y="28" width="4" height="6" rx="1.5" fill="${shade}"/>
+    <rect x="22" y="28" width="4" height="6" rx="1.5" fill="${shade}"/>
+    <rect x="2" y="6" width="28" height="8" rx="3" fill="${shade}"/>
+  </svg>`;
 }
 
 function buildUnitFilterButtons(units) {
   const container = $("#unitFilterButtons");
   container.innerHTML = units.map((u) => `
-    <button class="unit-filter-btn" data-unit="${escapeAttr(u.unit)}" type="button">
-      ${escapeHtml(u.unit)}
-    </button>`).join("");
+    <button class="unit-filter-btn" data-unit="${escapeAttr(u.unit)}" type="button">${escapeHtml(u.unit)}</button>`).join("");
   container.querySelectorAll(".unit-filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => selectUnit(btn.dataset.unit));
   });

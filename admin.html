@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Controle de Vagas APS</title>
-    <link rel="stylesheet" href="./admin.css?v=20260706-v2" />
-    <script src="./config.js?v=20260706-v2"></script>
+    <link rel="stylesheet" href="./admin.css?v=20260706-v3" />
+    <script src="./config.js?v=20260706-v3"></script>
   </head>
   <body>
     <canvas id="adminBrain" class="admin-brain" aria-hidden="true"></canvas>
@@ -141,22 +141,34 @@
 
         <!-- Visão por unidade específica -->
         <div id="unitDetailSection" hidden>
+          <!-- Faixa do diretor -->
+          <div class="ud-director-strip" id="udDirectorStrip"></div>
+
+          <!-- KPIs -->
           <div class="unit-detail-header">
             <div class="unit-detail-kpis">
               <div class="ud-kpi"><span>Salas</span><strong id="udRooms">0</strong></div>
               <div class="ud-kpi"><span>Capacidade</span><strong id="udCapacity">0</strong></div>
               <div class="ud-kpi"><span>Alunos</span><strong id="udStudents">0</strong></div>
-              <div class="ud-kpi hot"><span>Vagas</span><strong id="udVacancies">0</strong></div>
+              <div class="ud-kpi hot"><span>Vagas livres</span><strong id="udVacancies">0</strong></div>
               <div class="ud-kpi"><span>Ocupação</span><strong id="udOccupancy">0%</strong></div>
             </div>
             <div class="unit-detail-actions">
-              <button id="printUnitBtn" type="button" class="print-btn">🖨️ Imprimir / Salvar PDF</button>
+              <button id="printUnitBtn" type="button" class="print-btn">🖨️ Relatório PDF</button>
             </div>
           </div>
+
+          <!-- Resumo por segmento -->
+          <div class="ud-seg-wrap">
+            <div class="ud-seg-title">📊 Resumo por segmento</div>
+            <div id="udSegSummary" class="ud-seg-grid"></div>
+          </div>
+
+          <!-- Turmas por período -->
           <div id="unitDetailBody" class="unit-detail-body"></div>
         </div>
       </section>
     </main>
-    <script type="module" src="./admin.js?v=20260706-v2"></script>
+    <script type="module" src="./admin.js?v=20260706-v3"></script>
   </body>
 </html>
