@@ -1426,10 +1426,11 @@ function handleAnswer(q, value) {
       renderAll(); renderAnswer(); return;
     }
     if (flow && flow.index < flow.periods.length - 1) {
+      const confirmed = flow.periods[flow.index];
       flow.index += 1;
       const next = flow.periods[flow.index];
       const shiftEmoji = { "Manhã": "🌅", "Tarde": "🌆", "Integral": "🔄" };
-      appendAssistant(`✅ Manhã confirmado! Agora o período da <strong>${next.shift}</strong> ${shiftEmoji[next.shift] || ""} — <strong>${next.total} salas</strong>. Confere?`);
+      appendAssistant(`✅ ${confirmed.shift} confirmado! Agora o período da <strong>${next.shift}</strong> ${shiftEmoji[next.shift] || ""} — <strong>${next.total} salas</strong>. Confere?`);
       state.currentQuestion = { type: "blueprintPeriodConfirm" };
       renderAll(); renderAnswer(); return;
     }
@@ -1556,7 +1557,7 @@ function buildBlueprintPeriods(blueprint) {
     Object.entries(gp.shifts || {}).forEach(([rawShift, cnt]) => {
       const shift = displayShift(rawShift);
       if (!byShift[shift]) byShift[shift] = [];
-      byShift[shift].push({ grade: displayGrade(gp.grade), count: Number(cnt || 0), rawShift });
+      byShift[shift].push({ grade: displayGrade(gp.grade), count: Number(cnt || 0), rawShift, segment: displaySegment(gp.segment) });
     });
   });
   return shiftOrder.filter((s) => byShift[s]).map((shift) => ({
@@ -1907,7 +1908,8 @@ function missionLabel() {
   if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
-  if (q.type === "blueprintConfirm") return { title: "Confirmar estrutura", hint: "Use a base da Sistema de Secretaria por unidade." };
+  if (q.type === "blueprintPeriodConfirm") return { title: "Confirmar períodos", hint: "Valide Manhã e Tarde antes de registrar os alunos." };
+  if (q.type === "blueprintConfirm") return { title: "Ajustar estrutura", hint: "Edite turma por turma conforme necessário." };
   if (q.type === "roomCount") return { title: "Quantas turmas?", hint: "Informe a quantidade desta série neste turno." };
   if (q.type === "mixedStudents") return { title: "Composição da sala", hint: "Separe os alunos por série da turma mista." };
   if (q.type === "mixedConfirm") return { title: "Confirmar composição", hint: "Valide o total antes da capacidade." };
