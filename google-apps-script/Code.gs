@@ -40,6 +40,7 @@ function routeApi(params) {
     if (action === "forgotPassword") return forgotPassword(params);
     if (action === "aiCoach") return aiCoach(params);
     if (action === "getLatestReport") return getLatestReport(params);
+    if (action === "clearAllData") return clearAllData(params);
     return { ok: false, error: "Acao nao reconhecida." };
   } catch (error) {
     return { ok: false, error: String(error && error.message ? error.message : error) };
@@ -172,6 +173,23 @@ function getLatestReport(params) {
   unitRows.sort(function(a, b) { return new Date(b[0]) - new Date(a[0]); });
   var latest = unitRows[0];
   return { ok: true, unit: unit, docUrl: latest[13] || "", pdfUrl: latest[14] || "", createdAt: valueToString(latest[0]) };
+}
+
+function clearAllData(params) {
+  requireAdmin(params.token);
+  const ss = SpreadsheetApp.openById(DEFAULT_SPREADSHEET_ID);
+  const sheetsToClean = ["Unidades", "Salas", "Movimentacoes", "Evasao", "Relatorios", "HistoricoSemanal", "Eventos"];
+  const cleared = [];
+  sheetsToClean.forEach(function(name) {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) return;
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+    }
+    cleared.push(name);
+  });
+  return { ok: true, cleared: cleared, clearedAt: new Date().toISOString() };
 }
 
 function requestAccess(params) {

@@ -11,6 +11,7 @@ function initAdmin() {
   initBrain();
   $("#loginForm").addEventListener("submit", login);
   $("#refreshButton").addEventListener("click", loadDashboard);
+  $("#clearDataAdminButton")?.addEventListener("click", clearAllDataAdmin);
   $("#unitSearch").addEventListener("input", renderDashboard);
   $("#accessForm").addEventListener("submit", createAccessRequest);
   $("#publicAccessButton")?.addEventListener("click", createPublicAccessRequest);
@@ -105,6 +106,24 @@ async function createAccessRequest(event) {
   if (result.ok) {
     form.reset();
     await loadDashboard();
+  }
+}
+
+async function clearAllDataAdmin() {
+  const btn = $("#clearDataAdminButton");
+  if (!confirm("⚠️ ATENÇÃO: isso apagará TODOS os registros de salas, unidades, movimentações, evasão e relatórios da planilha.\n\nEssa ação não pode ser desfeita. Confirmar?")) return;
+  btn.textContent = "Limpando...";
+  btn.disabled = true;
+  try {
+    const result = await api("clearAllData", { token: localStorage.getItem(tokenKey) || "" });
+    if (!result.ok) throw new Error(result.error || "Falha ao limpar dados.");
+    alert(`✅ Dados limpos com sucesso!\nAbas limpas: ${(result.cleared || []).join(", ")}`);
+    await loadDashboard();
+  } catch (error) {
+    alert("Erro ao limpar: " + error.message);
+  } finally {
+    btn.textContent = "🗑️ Limpar todos os dados";
+    btn.disabled = false;
   }
 }
 
