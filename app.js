@@ -783,10 +783,15 @@ function importJson(event) {
   event.target.value = "";
 }
 
+const md = (text) => String(text || "")
+  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  .replace(/\*([^*]+?)\*/g, "<em>$1</em>");
+
 function appendAssistant(html) {
-  compactChatForNextPrompt(html);
-  const message = appendMessage("assistant", html);
-  maybePolishAssistantMessage(message, html);
+  const parsed = md(html);
+  compactChatForNextPrompt(parsed);
+  const message = appendMessage("assistant", parsed);
+  maybePolishAssistantMessage(message, parsed);
 }
 function appendUser(text) { appendMessage("user", escapeHtml(text)); }
 function appendMessage(role, html) {
@@ -1329,9 +1334,9 @@ function directorTutorialCard() {
 
 function currentQuestionPrompt() {
   const q = state.currentQuestion || { type: "director" };
-  if (q.type === "director") return "Olá! Vou montar o mapa de vagas com você, um passo por vez. Para começar, qual é o seu nome?";
-  if (q.type === "role") return `${firstName()}, qual é a sua função na unidade?`;
-  if (q.type === "unit") return `${firstName()}, confirme a unidade que você representa.`;
+  if (q.type === "director") return "👋 Olá! Eu sou o Radar de Vagas APS. Vou te guiar passo a passo no preenchimento das turmas — é rápido e simples!\n\nPrimeiro: qual é o seu nome?";
+  if (q.type === "role") return `Ótimo, ${firstName()}! 😊 Agora me conta: qual é a sua função aqui na unidade?`;
+  if (q.type === "unit") return `Perfeito! Agora selecione a **unidade** que você vai registrar hoje 👇`;
   if (q.type === "yesno" && q.key === "hasContraturno") return unitHasPresetContraturno(state.unit)
     ? `${firstName()}, o contraturno desta unidade já está confirmado no sistema. Vou seguir para a estrutura.`
     : `${firstName()}, esta unidade possui atendimento de contraturno para registrarmos neste levantamento?`;
@@ -1395,13 +1400,13 @@ function handleAnswer(q, value) {
   }
   if (q.type === "director") {
     state.director = String(value || "").trim();
-    appendAssistant(`Olá, ${firstName()}! Qual é a sua função na unidade?`);
+    appendAssistant(`Ótimo, **${firstName()}**! 😊 Agora me conta: qual é a sua função aqui na unidade?`);
     state.currentQuestion = { type: "role" };
     return;
   }
   if (q.type === "role") {
     state.role = String(value || "").trim();
-    appendAssistant(`Perfeito, ${firstName()}! Agora confirme a unidade que você vai registrar.`);
+    appendAssistant(`Combinado! Agora selecione a **unidade** que você vai registrar hoje 👇`);
     state.currentQuestion = { type: "unit" };
     return;
   }
@@ -1916,9 +1921,9 @@ function calculateProgress() {
 
 function missionLabel() {
   const q = state.currentQuestion;
-  if (q.type === "director") return { title: "Identificar responsável", hint: "Informe o nome de quem está preenchendo." };
-  if (q.type === "role") return { title: "Função na unidade", hint: "Auxiliar de Secretaria ou Promotoria de Matrícula." };
-  if (q.type === "unit") return { title: "Confirmar unidade", hint: "Escolha a unidade que você representa." };
+  if (q.type === "director") return { title: "Quem é você?", hint: "Diga seu nome para eu personalizar a experiência." };
+  if (q.type === "role") return { title: "Sua função", hint: "Auxiliar de Secretaria ou Promotoria de Matrícula." };
+  if (q.type === "unit") return { title: "Sua unidade", hint: "Selecione a escola que você vai registrar hoje." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
   if (q.type === "blueprintPeriodConfirm") return { title: "Confirmar períodos", hint: "Valide Manhã e Tarde antes de registrar os alunos." };

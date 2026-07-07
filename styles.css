@@ -647,9 +647,9 @@ h1 {
     rgba(255,255,255,.04);
 }
 .answer-mount { min-width: 0; }
-.role-choice { display: flex; gap: 12px; flex-wrap: wrap; }
-.role-btn { flex: 1; min-width: 180px; padding: 14px 20px; border: 2px solid var(--aqua); background: rgba(22,214,211,.08); color: var(--aqua); border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background .15s, transform .1s; }
-.role-btn:hover { background: rgba(22,214,211,.2); transform: translateY(-2px); }
+.role-choice { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; }
+.role-btn { flex: 1; min-width: 200px; max-width: 320px; padding: 18px 24px; border: 2px solid var(--aqua); background: rgba(22,214,211,.08); color: var(--aqua); border-radius: 16px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: background .18s, transform .12s, box-shadow .18s; text-align: center; line-height: 1.4; }
+.role-btn:hover { background: rgba(22,214,211,.18); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(22,214,211,.18); }
 .answer-mount input, .answer-mount select {
   width: 100%;
   min-height: 60px;
