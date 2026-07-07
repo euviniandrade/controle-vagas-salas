@@ -247,7 +247,7 @@ button { cursor: pointer; }
   min-height: calc(100vh - 128px);
   display: grid;
   grid-template-rows: auto auto minmax(230px, 1fr) auto auto;
-  overflow: hidden;
+  overflow: clip;
   position: relative;
 }
 .conversation::before {
@@ -635,39 +635,49 @@ h1 {
 
 .answer-bar {
   position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr 52px;
-  gap: 10px;
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
   padding: 14px 20px 18px;
   border-top: 1px solid rgba(255,255,255,.1);
-  background: rgba(5,15,30,.6);
+  background: rgba(5,15,30,.85);
 }
-.answer-mount { min-width: 0; }
+.answer-mount {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .role-choice { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; }
 .role-btn { flex: 1; min-width: 200px; max-width: 320px; padding: 18px 24px; border: 2px solid var(--aqua); background: rgba(22,214,211,.08); color: var(--aqua); border-radius: 16px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: background .18s, transform .12s, box-shadow .18s; text-align: center; line-height: 1.4; }
 .role-btn:hover { background: rgba(22,214,211,.18); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(22,214,211,.18); }
-.answer-mount input, .answer-mount select {
+.answer-mount input:not([type="hidden"]),
+.answer-mount select {
+  display: block;
+  box-sizing: border-box;
   width: 100%;
   height: 50px;
-  border: 2px solid rgba(22,214,211,.5);
+  border: 2px solid var(--aqua);
   border-radius: 12px;
   padding: 0 18px;
   color: #fff;
-  background: rgba(12,28,52,.95);
+  background: #0d1f38;
   outline: none;
   font-size: 1rem;
   font-family: inherit;
+  opacity: 1;
+  visibility: visible;
   transition: border-color .18s, box-shadow .18s;
 }
 .answer-mount select option { color: #fff; background: #07101f; }
-.answer-mount input::placeholder { color: rgba(140,190,220,.5); font-size: .95rem; }
-.answer-mount input:focus, .answer-mount select:focus {
-  border-color: var(--aqua);
-  box-shadow: 0 0 0 3px rgba(22,214,211,.18);
+.answer-mount input:not([type="hidden"])::placeholder { color: rgba(140,190,220,.55); font-size: .95rem; }
+.answer-mount input:not([type="hidden"]):focus,
+.answer-mount select:focus {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(22,214,211,.22);
 }
 .send-btn {
+  flex-shrink: 0;
   width: 52px;
   height: 52px;
   display: grid;
@@ -912,7 +922,7 @@ h1 {
   .collection-framework { padding-left: 16px; padding-right: 16px; }
   .chat-log { padding-left: 16px; padding-right: 16px; }
   .message { max-width: 96%; }
-  .answer-bar { grid-template-columns: 1fr 48px; padding: 10px 14px 14px; }
+  .answer-bar { padding: 10px 14px 14px; }
   .send-btn { width: 48px; height: 48px; }
   .room-grid { grid-template-columns: 1fr; }
   .rooms-head { display: grid; }

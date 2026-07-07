@@ -1,4 +1,4 @@
-const SW_VERSION = "20260707-v1";
+const SW_VERSION = "20260707-v2";
 const CACHE_NAME = `aps-vagas-${SW_VERSION}`;
 
 // Arquivos HTML sempre buscados da rede (nunca do cache)
