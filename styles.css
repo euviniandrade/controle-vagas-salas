@@ -636,47 +636,40 @@ h1 {
 .answer-bar {
   position: relative;
   z-index: 2;
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 52px;
   gap: 10px;
-  padding: 12px 20px 16px;
-  border-top: 1px solid rgba(255,255,255,.06);
-  background: transparent;
-  max-width: 700px;
-  margin: 0 auto;
-  width: 100%;
+  align-items: center;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  background: rgba(5,15,30,.6);
 }
-.answer-mount { min-width: 0; flex: 1; }
+.answer-mount { min-width: 0; }
 .role-choice { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%; }
 .role-btn { flex: 1; min-width: 200px; max-width: 320px; padding: 18px 24px; border: 2px solid var(--aqua); background: rgba(22,214,211,.08); color: var(--aqua); border-radius: 16px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: background .18s, transform .12s, box-shadow .18s; text-align: center; line-height: 1.4; }
 .role-btn:hover { background: rgba(22,214,211,.18); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(22,214,211,.18); }
 .answer-mount input, .answer-mount select {
   width: 100%;
-  min-height: 50px;
-  border: 1.5px solid rgba(22,214,211,.35);
-  border-radius: 26px;
-  padding: 0 22px;
-  color: #e8f8ff;
-  background: rgba(10,30,55,.7);
+  height: 50px;
+  border: 2px solid rgba(22,214,211,.5);
+  border-radius: 12px;
+  padding: 0 18px;
+  color: #fff;
+  background: rgba(12,28,52,.95);
   outline: none;
-  font-size: .97rem;
-  letter-spacing: .01em;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 0 0 rgba(22,214,211,0), inset 0 1px 0 rgba(255,255,255,.06);
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color .18s, box-shadow .18s;
 }
-.answer-mount select { border-radius: 26px; }
 .answer-mount select option { color: #fff; background: #07101f; }
-.answer-mount input::placeholder { color: rgba(180,220,240,.45); }
+.answer-mount input::placeholder { color: rgba(140,190,220,.5); font-size: .95rem; }
 .answer-mount input:focus, .answer-mount select:focus {
   border-color: var(--aqua);
-  background: rgba(10,35,65,.85);
-  box-shadow: 0 0 0 3px rgba(22,214,211,.15), 0 2px 16px rgba(22,214,211,.08);
+  box-shadow: 0 0 0 3px rgba(22,214,211,.18);
 }
 .send-btn {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border: 0;
@@ -919,8 +912,8 @@ h1 {
   .collection-framework { padding-left: 16px; padding-right: 16px; }
   .chat-log { padding-left: 16px; padding-right: 16px; }
   .message { max-width: 96%; }
-  .answer-bar { padding: 8px 12px 12px; }
-  .send-btn { width: 44px; height: 44px; }
+  .answer-bar { grid-template-columns: 1fr 48px; padding: 10px 14px 14px; }
+  .send-btn { width: 48px; height: 48px; }
   .room-grid { grid-template-columns: 1fr; }
   .rooms-head { display: grid; }
   .rooms-head p { text-align: left; }
@@ -1040,11 +1033,8 @@ h1 {
 .answer-bar-actions {
   display: flex;
   gap: 8px;
-  padding: 6px 16px 0;
+  padding: 8px 20px 0;
   justify-content: flex-end;
-  max-width: 720px;
-  margin: 0 auto;
-  width: 100%;
 }
 .bar-action-btn {
   font-size: .8rem;
