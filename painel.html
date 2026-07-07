@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Abrindo painel...</title>
+  <style>
+    body { margin: 0; background: #050b18; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui; color: #19f1ff; }
+    p { font-size: 1.1rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <p>Abrindo painel administrativo...</p>
+  <script>
+    // Redireciona com timestamp único — bypassa cache do CDN e do navegador
+    location.replace("./admin.html?t=" + Date.now());
+  </script>
+</body>
+</html>
