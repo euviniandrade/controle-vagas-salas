@@ -451,7 +451,7 @@ function renderDashboard() {
       escapeHtml(unit.students || 0),
       `<strong>${escapeHtml(unit.vacancies || 0)}</strong><small>${escapeHtml(unit.week || "")}</small>`,
     ]),
-  ]);
+  ]));
 
   const roomsTable = $("#roomsTable");
   if (roomsTable) roomsTable.innerHTML = table([
@@ -489,7 +489,7 @@ function renderDashboard() {
       escapeHtml(`${report.occupancyRate || 0}%`),
       report.docUrl ? `<a href="${escapeAttr(report.docUrl)}" target="_blank" rel="noopener">Abrir</a>` : `<span>Aguardando Drive</span>`,
     ]),
-  ]);
+  ]));
 }
 
 function summarizeEvasionPeriods(evasion) {
