@@ -5,12 +5,7 @@ const googleScriptUrl = window.APP_CONFIG?.GOOGLE_SCRIPT_URL || "";
 const spreadsheetId = window.APP_CONFIG?.SPREADSHEET_ID || "";
 const unitBlueprints = window.UNIT_BLUEPRINTS || {};
 
-const directorUnits = [
-  ["Douglas", "CAR"], ["Washington", "CAP"], ["Anderson", "CAEGW"], ["Albert", "CATS"],
-  ["Acleto", "CACLI I"], ["Uoston", "CACLI II"], ["Roberto", "CAEA"], ["Allan", "CAIS"],
-  ["Josy", "EAP"], ["Ednaldo", "EATW"], ["Tatiane", "EAA"], ["Alessandro", "EAJL"],
-  ["Rafael", "EACF"], ["Fábio", "EAVB"],
-].map(([director, unit]) => ({ director, unit }));
+const unitList = ["CAR", "CAP", "CAEGW", "CATS", "CACLI I", "CACLI II", "CAEA", "CAIS", "EAP", "EATW", "EAA", "EAJL", "EACF", "EAVB"];
 
 const presetContraturnoUnits = new Set(["CAR", "CATS", "CACLI", "CACLI I", "CACLI 1", "CACLI II", "CACLI 2", "CAEA", "CAIS", "EACF", "EAVB"].map(normalizeName));
 
@@ -88,6 +83,7 @@ function init() {
 
 function ensureDefaults() {
   state.director ||= "";
+  state.role ||= "";
   state.unit ||= "";
   state.currentQuestion ||= { type: "director" };
   state.rooms ||= [];
@@ -98,7 +94,7 @@ function ensureDefaults() {
   state.answers ||= {};
   state.weeklyDate ||= new Date().toISOString().slice(0, 10);
   state.weekId ||= currentWeek;
-  const validQuestions = new Set(["director", "unit", "yesno", "blueprintPeriodConfirm", "blueprintConfirm", "roomCount", "roomStudents", "mixedStudents", "mixedConfirm", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
+  const validQuestions = new Set(["director", "role", "unit", "yesno", "blueprintPeriodConfirm", "blueprintConfirm", "roomCount", "roomStudents", "mixedStudents", "mixedConfirm", "roomCapacity", "review", "dailyRoom", "dailyType", "dailyQty", "dailyReason", "done"]);
   if (!validQuestions.has(state.currentQuestion.type) || state.currentQuestion.segmentKey) {
     state.currentQuestion = { type: "director" };
     delete state.pendingSegment;
@@ -417,15 +413,30 @@ function renderAnswer() {
     return;
   }
   if (q.type === "director") {
+    answerMount.innerHTML = `<input type="text" required autocomplete="name" placeholder="Seu nome completo" />`;
+    return;
+  }
+  if (q.type === "role") {
     answerMount.innerHTML = `
-      <input type="text" required list="directorSuggestions" autocomplete="name" placeholder="Seu nome" />
-      <datalist id="directorSuggestions">
-        ${directorUnits.map((item) => `<option value="${escapeAttr(item.director)}"></option>`).join("")}
-      </datalist>`;
+      <div class="role-choice">
+        <button type="button" class="role-btn" data-role="Auxiliar de Secretaria">🗂️ Auxiliar de Secretaria</button>
+        <button type="button" class="role-btn" data-role="Promotoria de Matrícula">🎯 Promotoria de Matrícula</button>
+      </div>`;
+    answerMount.querySelectorAll(".role-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.role = btn.dataset.role;
+        appendUser(btn.dataset.role);
+        appendAssistant(`Perfeito, ${firstName()}! Agora confirme a unidade que você vai registrar.`);
+        state.currentQuestion = { type: "unit" };
+        saveState();
+        renderAll();
+        renderAnswer();
+      });
+    });
     return;
   }
   if (q.type === "unit") {
-    answerMount.innerHTML = `<select required>${directorUnits.map((item) => `<option value="${escapeAttr(item.unit)}" ${state.unit === item.unit ? "selected" : ""}>${escapeHtml(item.unit)}</option>`).join("")}</select>`;
+    answerMount.innerHTML = `<select required>${unitList.map((u) => `<option value="${escapeAttr(u)}" ${state.unit === u ? "selected" : ""}>${escapeHtml(u)}</option>`).join("")}</select>`;
     return;
   }
   if (q.type === "yesno") {
@@ -562,7 +573,7 @@ function renderAll() {
 }
 
 function renderUnit() {
-  $("#unitBadge").textContent = state.director ? `Diretor: ${state.director}` : "Unidade não iniciada";
+  $("#unitBadge").textContent = state.director ? `${state.role || "Responsável"}: ${state.director}` : "Unidade não iniciada";
   $("#unitTitle").textContent = state.unit || "Comece pela unidade";
   $("#unitSubtitle").textContent = state.answers.hasHighSchool ? "Ensino Médio: Sim" : "Roteiro em andamento";
 }
@@ -923,9 +934,14 @@ function goBack() {
   const q = state.currentQuestion;
   if (!q) return;
   const type = q.type;
-  if (type === "unit") {
+  if (type === "role") {
     state.currentQuestion = { type: "director" };
+    state.role = "";
     state.director = "";
+  }
+  if (type === "unit") {
+    state.currentQuestion = { type: "role" };
+    state.role = "";
     state.unit = "";
     chatLog.innerHTML = "";
     chatLog.dataset.started = "";
@@ -1010,7 +1026,7 @@ async function jsonpGet(params) {
 
 function buildCloudPayload(reason) {
   const totals = getTotals();
-  return { reason, syncedAt: new Date().toISOString(), submittedAt: state.submittedAt || "", unit: state.unit || "", director: state.director || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", blueprint: unitBlueprints[state.unit] || null, totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
+  return { reason, syncedAt: new Date().toISOString(), submittedAt: state.submittedAt || "", unit: state.unit || "", director: state.director || "", role: state.role || "", weekId: state.weekId || currentWeek, weeklyDate: state.weeklyDate || "", hasHighSchool: state.answers.hasHighSchool ? "Sim" : "Não", blueprint: unitBlueprints[state.unit] || null, totals, rooms: state.rooms || [], history: state.history || [], movements: state.movements || [], reports: state.reports || [] };
 }
 
 function loadState() {
@@ -1208,6 +1224,7 @@ function buildReportSnapshot(type) {
     createdAt: new Date().toISOString(),
     unit: state.unit || "",
     director: state.director || "",
+    role: state.role || "",
     weekId: state.weekId || currentWeek,
     totals,
     occupancyRate: totals.capacity ? Math.round((totals.students / totals.capacity) * 100) : 0,
@@ -1275,10 +1292,10 @@ function reviewChecklistCard(report) {
   return `
     <div class="review-card">
       <h3>Conferência antes do envio</h3>
-      <p>Confira se unidade, diretor, salas, alunos e capacidades estão corretos. Nada foi enviado ao painel administrativo ainda.</p>
+      <p>Confira se unidade, responsável, salas, alunos e capacidades estão corretos. Nada foi enviado ao painel administrativo ainda.</p>
       <ul>
         <li><strong>Unidade</strong><span>${escapeHtml(report.unit || "-")}</span></li>
-        <li><strong>Diretor</strong><span>${escapeHtml(report.director || "-")}</span></li>
+        <li><strong>Preenchido por</strong><span>${escapeHtml(report.director || "-")} ${escapeHtml(report.role ? `(${report.role})` : "")}</span></li>
         <li><strong>Salas mapeadas</strong><span>${report.totals.rooms}</span></li>
         <li><strong>Vagas disponíveis</strong><span>${report.totals.vacancies}</span></li>
       </ul>
@@ -1322,7 +1339,8 @@ function directorTutorialCard() {
 function currentQuestionPrompt() {
   const q = state.currentQuestion || { type: "director" };
   if (q.type === "director") return "Olá! Vou montar o mapa de vagas com você, um passo por vez. Para começar, qual é o seu nome?";
-  if (q.type === "unit") return `${firstName()}, confirme a unidade para continuarmos.`;
+  if (q.type === "role") return `${firstName()}, qual é a sua função na unidade?`;
+  if (q.type === "unit") return `${firstName()}, confirme a unidade que você representa.`;
   if (q.type === "yesno" && q.key === "hasContraturno") return unitHasPresetContraturno(state.unit)
     ? `${firstName()}, o contraturno desta unidade já está confirmado no sistema. Vou seguir para a estrutura.`
     : `${firstName()}, esta unidade possui atendimento de contraturno para registrarmos neste levantamento?`;
@@ -1385,12 +1403,9 @@ function handleAnswer(q, value) {
     return;
   }
   if (q.type === "director") {
-    const directorName = String(value || "").trim();
-    const match = directorUnits.find((item) => normalizeName(item.director) === normalizeName(directorName));
-    state.director = match ? match.director : directorName;
-    if (match) state.unit = match.unit;
-    appendAssistant(`${state.director}, combinado. Eu vou conduzir tudo turma por turma e deixar o saldo de vagas pronto no final. Confirme a unidade.`);
-    state.currentQuestion = { type: "unit" };
+    state.director = String(value || "").trim();
+    appendAssistant(`Olá, ${firstName()}! Qual é a sua função na unidade?`);
+    state.currentQuestion = { type: "role" };
     return;
   }
   if (q.type === "unit") {
@@ -1571,7 +1586,7 @@ function unitOverviewCard(blueprint) {
   const segmentRows = blueprintSegmentSummary(blueprint);
   const shifts = blueprintShiftSummary(blueprint);
   const mixed = blueprint.mixedGroups || [];
-  const details = directorUnits.find((item) => item.unit === blueprint.unit);
+  const details = null;
   const mixedList = mixed.length
     ? mixed.map((group) => {
         const grades = (group.grades || []).map(displayGrade).join(" + ");
@@ -1592,7 +1607,7 @@ function unitOverviewCard(blueprint) {
     <div class="unit-map-card">
       <span>📋 Mapa geral da unidade — Sistema de Secretaria</span>
       <h3>${escapeHtml(blueprint.unit)}</h3>
-      <p>Olá, <strong>${escapeHtml(firstName())}</strong>! Esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Diretor vinculado: <strong>${escapeHtml(details?.director || state.director || "-")}</strong>.</p>
+      <p>Olá, <strong>${escapeHtml(firstName())}</strong>! Esta unidade tem <strong>${blueprint.totalRooms} sala(s)</strong> previstas para validação. Preenchimento por: <strong>${escapeHtml(state.role || "Responsável")}</strong>.</p>
       <div class="unit-map-kpis">
         ${segmentCards}
       </div>
@@ -1904,8 +1919,9 @@ function calculateProgress() {
 
 function missionLabel() {
   const q = state.currentQuestion;
-  if (q.type === "director") return { title: "Identificar diretor", hint: "Comece pelo nome de quem está respondendo." };
-  if (q.type === "unit") return { title: "Confirmar unidade", hint: "A unidade será vinculada ao diretor." };
+  if (q.type === "director") return { title: "Identificar responsável", hint: "Informe o nome de quem está preenchendo." };
+  if (q.type === "role") return { title: "Função na unidade", hint: "Auxiliar de Secretaria ou Promotoria de Matrícula." };
+  if (q.type === "unit") return { title: "Confirmar unidade", hint: "Escolha a unidade que você representa." };
   if (q.type === "yesno" && q.key === "hasContraturno") return { title: "Contraturno", hint: "Isso define se o bloco extra entra no roteiro." };
   if (q.type === "yesno" && q.key === "hasHighSchool") return { title: "Ensino Médio", hint: "Se não tiver, a coleta termina no 9º ano." };
   if (q.type === "blueprintPeriodConfirm") return { title: "Confirmar períodos", hint: "Valide Manhã e Tarde antes de registrar os alunos." };
@@ -1934,7 +1950,7 @@ function segmentIntro(segment) {
 }
 
 function firstName() {
-  return state.director ? state.director.split(" ")[0] : "Diretor";
+  return state.director ? state.director.split(" ")[0] : "Você";
 }
 
 function displayShift(value) {

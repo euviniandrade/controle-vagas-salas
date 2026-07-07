@@ -647,6 +647,9 @@ h1 {
     rgba(255,255,255,.04);
 }
 .answer-mount { min-width: 0; }
+.role-choice { display: flex; gap: 12px; flex-wrap: wrap; }
+.role-btn { flex: 1; min-width: 180px; padding: 14px 20px; border: 2px solid var(--aqua); background: rgba(22,214,211,.08); color: var(--aqua); border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background .15s, transform .1s; }
+.role-btn:hover { background: rgba(22,214,211,.2); transform: translateY(-2px); }
 .answer-mount input, .answer-mount select {
   width: 100%;
   min-height: 60px;
