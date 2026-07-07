@@ -421,9 +421,11 @@ function renderDashboard() {
     .filter((unit) => Number(unit.vacancies || 0) > 0)
     .sort((a, b) => Number(b.vacancies || 0) - Number(a.vacancies || 0))
     .slice(0, 6);
-  $("#campaignFocusList").innerHTML = campaignFocus.length
+  const safeSet = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+  safeSet("campaignFocusList", campaignFocus.length
     ? campaignFocus.map((unit) => `<div class="reason-item"><strong>${escapeHtml(unit.unit || "-")}</strong><span>${escapeHtml(unit.vacancies || 0)} vaga(s)</span></div>`).join("")
-    : `<div class="empty-state">Nenhuma unidade com vaga aberta sincronizada ainda.</div>`;
+    : `<div class="empty-state">Nenhuma unidade com vaga aberta sincronizada ainda.</div>`);
 
   const exitsByUnit = movements.reduce((acc, movement) => {
     if (movement.type === "Saída") acc[movement.unit || "-"] = (acc[movement.unit || "-"] || 0) + Number(movement.amount || 0);
@@ -433,13 +435,13 @@ function renderDashboard() {
     .map(([unit, exits]) => ({ unit, exits, vacancies: Number((units.find((item) => item.unit === unit) || {}).vacancies || 0) }))
     .sort((a, b) => b.exits - a.exits || a.vacancies - b.vacancies)
     .slice(0, 6);
-  $("#riskUnitsList").innerHTML = riskUnits.length
+  safeSet("riskUnitsList", riskUnits.length
     ? riskUnits.map((item) => `<div class="reason-item"><strong>${escapeHtml(item.unit)}</strong><span>${escapeHtml(item.exits)} saída(s)</span></div>`).join("")
-    : `<div class="empty-state">Sem risco de evasão registrado até agora.</div>`;
+    : `<div class="empty-state">Sem risco de evasão registrado até agora.</div>`);
 
-  const query = $("#unitSearch").value.trim().toLowerCase();
+  const query = ($("#unitSearch") || {}).value?.trim().toLowerCase() || "";
   const filteredUnits = units.filter((unit) => `${unit.unit} ${unit.director}`.toLowerCase().includes(query));
-  $("#unitTable").innerHTML = table([
+  safeSet("unitTable", table([
     ["Unidade", "Diretor", "Salas", "Capacidade", "Alunos", "Vagas"],
     ...filteredUnits.map((unit) => [
       escapeHtml(unit.unit || "-"),
@@ -451,7 +453,8 @@ function renderDashboard() {
     ]),
   ]);
 
-  $("#roomsTable").innerHTML = table([
+  const roomsTable = $("#roomsTable");
+  if (roomsTable) roomsTable.innerHTML = table([
     ["Unidade", "Turma", "Segmento", "Cap.", "Alunos", "Vagas"],
     ...rooms.slice(0, 450).map((room) => [
       escapeHtml(room.unit || "-"),
@@ -463,20 +466,20 @@ function renderDashboard() {
     ]),
   ]);
 
-  $("#usersList").innerHTML = users.length
+  safeSet("usersList", users.length
     ? users.map((user) => `<div class="user-pill"><strong>${escapeHtml(user.name || user.email || "-")}</strong><span>${escapeHtml(user.email || "")}</span><span>${escapeHtml(user.unit || "")} · <b class="status-ok">${escapeHtml(user.status || "Pendente")}</b></span></div>`).join("")
-    : `<div class="empty-state">Nenhum usuário cadastrado ainda.</div>`;
+    : `<div class="empty-state">Nenhum usuário cadastrado ainda.</div>`);
 
-  $("#reasonList").innerHTML = Object.keys(movementTotals.reasons).length
+  safeSet("reasonList", Object.keys(movementTotals.reasons).length
     ? Object.entries(movementTotals.reasons).sort((a, b) => b[1] - a[1]).map(([reason, total]) => `<div class="reason-item"><strong>${escapeHtml(reason)}</strong><span>${escapeHtml(total)} saída(s)</span></div>`).join("")
-    : `<div class="empty-state">Sem saídas registradas até agora.</div>`;
+    : `<div class="empty-state">Sem saídas registradas até agora.</div>`);
 
   const periodTotals = summarizeEvasionPeriods(evasion);
-  $("#evasionPeriodList").innerHTML = periodTotals.length
+  safeSet("evasionPeriodList", periodTotals.length
     ? periodTotals.map((item) => `<div class="reason-item"><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.total)} saída(s)</span></div>`).join("")
-    : `<div class="empty-state">Os comparativos semanais, mensais e anuais começam a partir dos próximos registros.</div>`;
+    : `<div class="empty-state">Os comparativos semanais, mensais e anuais começam a partir dos próximos registros.</div>`);
 
-  $("#reportsTable").innerHTML = table([
+  safeSet("reportsTable", table([
     ["Unidade", "Diretor", "Criado em", "Vagas", "Ocupação", "Drive"],
     ...reports.slice(0, 120).map((report) => [
       escapeHtml(report.unit || "-"),
