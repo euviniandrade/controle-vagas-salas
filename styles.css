@@ -246,7 +246,7 @@ button { cursor: pointer; }
 .conversation {
   min-height: calc(100vh - 128px);
   display: grid;
-  grid-template-rows: auto auto minmax(230px, 1fr) auto;
+  grid-template-rows: auto auto minmax(230px, 1fr) auto auto;
   overflow: hidden;
   position: relative;
 }
