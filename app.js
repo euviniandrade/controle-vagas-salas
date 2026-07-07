@@ -294,7 +294,7 @@ function renderAnswer() {
   }
   if (q.type === "dailyQty") {
     const label = state.updateFlow?.type === "Ajuste do total" ? "Novo total de alunos" : "Quantidade de alunos";
-    answerMount.innerHTML = `<input type="number" min="0" max="120" step="1" required placeholder="${label}" />`;
+    answerMount.innerHTML = `<input type="number" min="0" max="120" step="1" required placeholder="${label}" style="display:block;width:100%;height:52px;border:2px solid #19f1ff;border-radius:12px;padding:0 18px;color:#fff;background:#0d1f38;font-size:1rem;font-family:inherit;box-sizing:border-box;" />`;
     return;
   }
   if (q.type === "dailyReason") {
@@ -413,7 +413,7 @@ function renderAnswer() {
     return;
   }
   if (q.type === "director") {
-    answerMount.innerHTML = `<input type="text" required autocomplete="name" placeholder="Seu nome completo" />`;
+    answerMount.innerHTML = `<input type="text" required autocomplete="name" placeholder="Seu nome completo" style="display:block;width:100%;height:52px;border:2px solid #19f1ff;border-radius:12px;padding:0 18px;color:#fff;background:#0d1f38;font-size:1rem;font-family:inherit;box-sizing:border-box;" />`;
     return;
   }
   if (q.type === "role") {
@@ -436,15 +436,15 @@ function renderAnswer() {
     return;
   }
   if (q.type === "roomCount") {
-    answerMount.innerHTML = `<input type="number" min="0" max="8" step="1" required placeholder="Quantidade de salas" />`;
+    answerMount.innerHTML = `<input type="number" min="0" max="8" step="1" required placeholder="Quantidade de salas" style="display:block;width:100%;height:52px;border:2px solid #19f1ff;border-radius:12px;padding:0 18px;color:#fff;background:#0d1f38;font-size:1rem;font-family:inherit;box-sizing:border-box;" />`;
     return;
   }
   if (q.type === "roomStudents" || q.type === "roomCapacity") {
-    answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="${q.type === "roomStudents" ? "Alunos atuais" : "Capacidade máxima"}" />`;
+    answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="${q.type === "roomStudents" ? "Alunos atuais" : "Capacidade máxima"}" style="display:block;width:100%;height:52px;border:2px solid #19f1ff;border-radius:12px;padding:0 18px;color:#fff;background:#0d1f38;font-size:1rem;font-family:inherit;box-sizing:border-box;" />`;
     return;
   }
   if (q.type === "mixedStudents") {
-    answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="Alunos desta série" />`;
+    answerMount.innerHTML = `<input type="number" min="0" max="80" step="1" required placeholder="Alunos desta série" style="display:block;width:100%;height:52px;border:2px solid #19f1ff;border-radius:12px;padding:0 18px;color:#fff;background:#0d1f38;font-size:1rem;font-family:inherit;box-sizing:border-box;" />`;
     return;
   }
   if (q.type === "mixedConfirm") {
