@@ -419,20 +419,11 @@ function renderAnswer() {
   if (q.type === "role") {
     answerMount.innerHTML = `
       <div class="role-choice">
-        <button type="button" class="role-btn" data-role="Auxiliar de Secretaria">🗂️ Auxiliar de Secretaria</button>
-        <button type="button" class="role-btn" data-role="Promotoria de Matrícula">🎯 Promotoria de Matrícula</button>
-      </div>`;
-    answerMount.querySelectorAll(".role-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.role = btn.dataset.role;
-        appendUser(btn.dataset.role);
-        appendAssistant(`Perfeito, ${firstName()}! Agora confirme a unidade que você vai registrar.`);
-        state.currentQuestion = { type: "unit" };
-        saveState();
-        renderAll();
-        renderAnswer();
-      });
-    });
+        <button type="button" class="role-btn chip" data-value="Auxiliar de Secretaria">🗂️ Auxiliar de Secretaria</button>
+        <button type="button" class="role-btn chip" data-value="Promotoria de Matrícula">🎯 Promotoria de Matrícula</button>
+      </div>
+      <input type="hidden" required />`;
+    bindSingleChoice();
     return;
   }
   if (q.type === "unit") {
@@ -508,7 +499,7 @@ function submitAnswer(event) {
 }
 
 function collectValue(q) {
-  if (["director", "unit", "roomCount", "roomStudents", "mixedStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
+  if (["director", "role", "unit", "roomCount", "roomStudents", "mixedStudents", "roomCapacity", "dailyRoom", "dailyQty", "dailyReason"].includes(q.type)) {
     return answerMount.querySelector("select,input")?.value ?? "";
   }
   if (q.type === "yesno" || q.type === "dailyType" || q.type === "blueprintConfirm" || q.type === "blueprintPeriodConfirm" || q.type === "mixedConfirm") return answerMount.querySelector("input")?.value || "";
@@ -1406,6 +1397,12 @@ function handleAnswer(q, value) {
     state.director = String(value || "").trim();
     appendAssistant(`Olá, ${firstName()}! Qual é a sua função na unidade?`);
     state.currentQuestion = { type: "role" };
+    return;
+  }
+  if (q.type === "role") {
+    state.role = String(value || "").trim();
+    appendAssistant(`Perfeito, ${firstName()}! Agora confirme a unidade que você vai registrar.`);
+    state.currentQuestion = { type: "unit" };
     return;
   }
   if (q.type === "unit") {
