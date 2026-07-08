@@ -783,9 +783,11 @@ function importJson(event) {
   event.target.value = "";
 }
 
-const md = (text) => String(text || "")
-  .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-  .replace(/\*([^*]+?)\*/g, "<em>$1</em>");
+function md(text) {
+  return String(text || "")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+?)\*/g, "<em>$1</em>");
+}
 
 function appendAssistant(html) {
   const parsed = md(html);
