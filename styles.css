@@ -1039,6 +1039,43 @@ h1 {
   .blueprint-checklist { max-width: 100%; }
 }
 
+/* ── Account invite card ─────────────────────────────────────────────── */
+.invite-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px 24px;
+  background: linear-gradient(135deg, rgba(25,241,255,.1), rgba(255,212,71,.07));
+  border: 1px solid rgba(25,241,255,.28);
+  border-radius: 14px;
+  margin-top: 4px;
+}
+.invite-eyebrow {
+  color: var(--aqua);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.invite-card h3 { margin: 0; font-size: 1.25rem; color: #fff; }
+.invite-card p { margin: 0; color: #c7d9e6; font-size: .9rem; line-height: 1.5; }
+.invite-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.invite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: opacity .18s, transform .14s;
+  cursor: pointer;
+}
+.invite-btn:hover { opacity: .88; transform: translateY(-1px); }
+.invite-btn.primary { background: var(--aqua); color: #07101f; }
+.invite-btn.secondary { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.invite-skip { font-size: .78rem !important; color: var(--muted) !important; opacity: .7; }
+
 /* ── Voltar / Recomeçar acima do answer-bar ─────────────────────────── */
 .answer-bar-actions {
   display: flex;

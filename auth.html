@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acesso — APS Radar de Vagas</title>
+    <link rel="stylesheet" href="./auth.css?v=20260708-v1" />
+  </head>
+  <body>
+    <div class="auth-bg">
+      <span class="orb o1"></span>
+      <span class="orb o2"></span>
+      <span class="orb o3"></span>
+    </div>
+
+    <main class="auth-shell">
+      <div class="auth-brand">
+        <img src="./assets/logo-aps30-transparent.png" alt="APS30" />
+        <div>
+          <strong>APS Radar de Vagas</strong>
+          <small>Campanha de Matrículas 2026</small>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab active" data-tab="login">Entrar</button>
+        <button class="auth-tab" data-tab="register">Criar conta</button>
+      </div>
+
+      <!-- STATUS / ALERT -->
+      <div id="authAlert" class="auth-alert" hidden></div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm" class="auth-form" autocomplete="on">
+        <h2>Bem-vindo de volta</h2>
+        <p class="auth-sub">Acesse para acompanhar seus registros</p>
+
+        <label>
+          E-mail
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="seu@email.com" required />
+        </label>
+        <label class="pwd-label">
+          Senha
+          <div class="pwd-wrap">
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Sua senha" required />
+            <button type="button" class="eye-btn" data-target="loginPassword">👁</button>
+          </div>
+        </label>
+
+        <button type="button" class="link-btn" id="forgotPasswordBtn">Esqueci minha senha</button>
+
+        <button type="submit" class="btn-primary" id="loginBtn">
+          <span class="btn-text">Entrar</span>
+          <span class="btn-loader" hidden>⏳</span>
+        </button>
+
+        <div class="divider"><span>ou</span></div>
+
+        <button type="button" class="btn-google" id="googleLoginBtn">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.8 0 7 5.4 3.3 13.3l7.8 6.1C12.9 13.4 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M11.1 28.6A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.8-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.6-6.2z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.2-4-13-9.3l-8.6 6.2C7 42.6 14.8 48 24 48z"/></svg>
+          Continuar com Google
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" class="auth-form" hidden autocomplete="on">
+        <h2>Criar sua conta</h2>
+        <p class="auth-sub">Acompanhe seus registros de vagas a qualquer hora</p>
+
+        <label>
+          Nome completo
+          <input id="regName" type="text" autocomplete="name" placeholder="Seu nome" required />
+        </label>
+        <label>
+          E-mail
+          <input id="regEmail" type="email" autocomplete="email" placeholder="seu@email.com" required />
+        </label>
+        <label>
+          Celular <small>(para recuperação)</small>
+          <input id="regPhone" type="tel" autocomplete="tel" placeholder="(11) 99999-9999" />
+        </label>
+        <label>
+          Função
+          <select id="regRole" required>
+            <option value="">Selecione sua função</option>
+            <option value="Auxiliar de Secretaria">Auxiliar de Secretaria</option>
+            <option value="Promotoria de Matrícula">Promotoria de Matrícula</option>
+          </select>
+        </label>
+        <label class="pwd-label">
+          Senha
+          <div class="pwd-wrap">
+            <input id="regPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+            <button type="button" class="eye-btn" data-target="regPassword">👁</button>
+          </div>
+        </label>
+        <label class="pwd-label">
+          Confirmar senha
+          <div class="pwd-wrap">
+            <input id="regPassword2" type="password" autocomplete="new-password" placeholder="Repita a senha" required minlength="6" />
+            <button type="button" class="eye-btn" data-target="regPassword2">👁</button>
+          </div>
+        </label>
+
+        <button type="submit" class="btn-primary" id="registerBtn">
+          <span class="btn-text">Criar conta</span>
+          <span class="btn-loader" hidden>⏳</span>
+        </button>
+
+        <div class="divider"><span>ou</span></div>
+
+        <button type="button" class="btn-google" id="googleRegisterBtn">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.8 0 7 5.4 3.3 13.3l7.8 6.1C12.9 13.4 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M11.1 28.6A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.8-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.6-6.2z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.2-4-13-9.3l-8.6 6.2C7 42.6 14.8 48 24 48z"/></svg>
+          Continuar com Google
+        </button>
+      </form>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <form id="forgotForm" class="auth-form" hidden>
+        <button type="button" class="back-btn" id="backFromForgot">← Voltar</button>
+        <h2>Recuperar senha</h2>
+        <p class="auth-sub">Enviaremos um link de redefinição para seu e-mail</p>
+
+        <label>
+          E-mail cadastrado
+          <input id="forgotEmail" type="email" placeholder="seu@email.com" required />
+        </label>
+
+        <button type="submit" class="btn-primary" id="forgotBtn">
+          <span class="btn-text">Enviar link de recuperação</span>
+          <span class="btn-loader" hidden>⏳</span>
+        </button>
+
+        <div class="divider"><span>ou</span></div>
+
+        <button type="button" class="btn-secondary" id="showPhoneRecoveryBtn">
+          📱 Não lembro o e-mail — usar celular
+        </button>
+      </form>
+
+      <!-- PHONE RECOVERY FORM -->
+      <form id="phoneRecoveryForm" class="auth-form" hidden>
+        <button type="button" class="back-btn" id="backFromPhone">← Voltar</button>
+        <h2>Recuperar por celular</h2>
+        <p class="auth-sub">Informe o número de celular cadastrado na sua conta</p>
+
+        <label>
+          Número de celular
+          <input id="recoveryPhone" type="tel" placeholder="(11) 99999-9999" required />
+        </label>
+
+        <button type="submit" class="btn-primary" id="phoneRecoveryBtn">
+          <span class="btn-text">Buscar minha conta</span>
+          <span class="btn-loader" hidden>⏳</span>
+        </button>
+      </form>
+
+      <!-- SUCCESS STATE -->
+      <div id="authSuccess" class="auth-success" hidden>
+        <div class="success-icon">✅</div>
+        <h2 id="successTitle">Conta criada!</h2>
+        <p id="successMsg">Seu acesso foi configurado com sucesso.</p>
+        <a href="./index.html" class="btn-primary" style="text-decoration:none;text-align:center;">Ir para o formulário</a>
+        <a href="./admin.html" class="btn-secondary" style="text-decoration:none;text-align:center;">Acessar painel do gestor</a>
+      </div>
+    </main>
+
+    <script type="module" src="./auth.js?v=20260708-v1"></script>
+  </body>
+</html>

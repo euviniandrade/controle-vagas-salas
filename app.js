@@ -1306,10 +1306,25 @@ function confirmFinalSubmission() {
   state.currentQuestion = { type: "done" };
   appendAssistant(`Obrigado, ${firstName()}. Recebi a confirmação e agora vou enviar o mapa de vagas para o painel administrativo.`);
   appendAssistant(directorTutorialCard());
+  appendAssistant(accountInviteCard());
   renderAll();
   renderAnswer();
   persist();
   syncToCloud("completed-guide");
+}
+
+function accountInviteCard() {
+  return `
+    <div class="invite-card">
+      <span class="invite-eyebrow">🎉 Formulário enviado com sucesso!</span>
+      <h3>Quer acompanhar seus registros?</h3>
+      <p>Crie sua conta gratuita para acessar o painel do gestor, ver histórico e receber atualizações — a qualquer hora, de qualquer dispositivo.</p>
+      <div class="invite-actions">
+        <a href="./auth.html" class="invite-btn primary">Criar minha conta</a>
+        <a href="./auth.html" class="invite-btn secondary">Entrar com conta existente</a>
+      </div>
+      <p class="invite-skip">Não é obrigatório — seus dados já foram salvos.</p>
+    </div>`;
 }
 
 function explainCorrectionMode() {
