@@ -246,6 +246,9 @@ body {
   background: rgba(255,255,255,.12);
 }
 
+/* ── Hidden state (backup for [hidden] attribute) ── */
+[hidden] { display: none !important; }
+
 /* ── Success ── */
 .auth-success {
   display: flex;
