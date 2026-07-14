@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Radar de Vagas APS</title>
-    <link rel="stylesheet" href="./styles.css?v=20260708-v1" />
-    <script src="./config.js?v=20260708-v1"></script>
-    <script src="./unit-blueprints.generated.js?v=20260708-v1"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260708-v3" />
+    <script src="./config.js?v=20260708-v3"></script>
+    <script src="./unit-blueprints.generated.js?v=20260708-v3"></script>
   </head>
   <body>
     <section id="launchIntro" class="launch-intro" aria-label="Início da experiência">
@@ -20,6 +20,7 @@
         <h1>Radar de Vagas APS</h1>
         <p>Monitore turmas, alunos e vagas disponíveis em tempo real — unidade por unidade, sala por sala.</p>
         <button id="startExperience" type="button">Iniciar agora</button>
+        <a href="./admin.html" class="launch-admin-link">🔐 Área do Administrador</a>
       </div>
     </section>
 
@@ -214,7 +215,7 @@
     </dialog>
 
     <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./app.js?v=20260708-v1"></script>
+    <script type="module" src="./app.js?v=20260708-v3"></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./sw.js").then((reg) => {

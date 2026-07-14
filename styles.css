@@ -102,6 +102,18 @@ button { cursor: pointer; }
   animation: actionPulse 2.1s ease-in-out infinite;
 }
 
+.launch-admin-link {
+  display: inline-block;
+  margin-top: 4px;
+  color: rgba(255,255,255,.55);
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: .04em;
+  transition: color .2s;
+}
+.launch-admin-link:hover { color: var(--aqua); }
+
 .ambient { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
 .ambient::before {
   content: "";
